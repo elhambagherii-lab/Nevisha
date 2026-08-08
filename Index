@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پورتال آموزشی نویشا</title>
+    <style>
+        @import url('https://cdn.fontcdn.ir/Font/Persian/Vazir/Vazir.css');
+        
+        body {
+            font-family: 'Vazir', Tahoma, sans-serif;
+            background-color: #f4f7fb;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            background-color: #4a90e2;
+            color: white;
+            width: 100%;
+            text-align: center;
+            padding: 25px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .header p {
+            margin: 8px 0 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .container {
+            width: 90%;
+            max-width: 400px;
+            margin-top: 35px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .btn {
+            background-color: white;
+            color: #333;
+            text-decoration: none;
+            padding: 18px 20px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            width: 6px;
+        }
+        .btn:hover, .btn:active {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+        }
+        
+        /* رنگ‌بندی اختصاصی دکمه‌ها */
+        .btn-channel::before { background-color: #e74c3c; } /* قرمز برای کانال */
+        .btn-games::before { background-color: #2ecc71; } /* سبز برای بازی‌ها */
+        .btn-prompts::before { background-color: #9b59b6; } /* بنفش برای پرامپت‌ها */
+        .btn-info::before { background-color: #f1c40f; } /* زرد برای اینفوگرافی */
+        
+        .footer {
+            margin-top: 50px;
+            font-size: 12px;
+            color: #888;
+            padding-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>نویشا</h1>
+        <p>پلتفرم ابزارهای هوشمند و تعاملی آموزش</p>
+    </div>
+
+    <div class="container">
+        <!-- در قسمت href لینک کانال خود را جایگزین علامت # کنید -->
+        <a href="#" class="btn btn-channel">عضویت در کانال نویشا</a>
+        
+        <a href="games.html" class="btn btn-games">بازی‌های تعاملی و آموزشی</a>
+        
+        <a href="prompts.html" class="btn btn-prompts">پرامپت‌های آماده هوش مصنوعی</a>
+        
+        <a href="infographics.html" class="btn btn-info">اینفوگرافی‌های آموزشی</a>
+    </div>
+
+    <div class="footer">
+        طراح: الهام باقری | [Elham.Bagheri]
+    </div>
+
+</body>
+</html>
