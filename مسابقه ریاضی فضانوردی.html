@@ -1,0 +1,969 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>بازی فضایی - مأموریت نویشا</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vazirmatn Font -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #020205;
+            touch-action: none;
+            user-select: none;
+        }
+        
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .pointer-events-auto {
+            pointer-events: auto;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(15, 20, 35, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+        .neon-text-yellow {
+            text-shadow: 0 0 10px rgba(255, 200, 0, 0.8), 0 0 20px rgba(255, 200, 0, 0.4);
+        }
+
+        .heart-active {
+            color: #ff3366;
+            filter: drop-shadow(0 0 6px rgba(255, 51, 102, 0.9));
+        }
+        .heart-empty {
+            color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes toastSlide {
+            0% { top: -60px; opacity: 0; }
+            10% { top: 20px; opacity: 1; }
+            90% { top: 20px; opacity: 1; }
+            100% { top: -60px; opacity: 0; }
+        }
+        .toast-show {
+            animation: toastSlide 3s ease-in-out forwards;
+        }
+
+        /* Mobile Controls */
+        .mobile-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            transition: all 0.2s;
+        }
+        .mobile-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(0.9);
+        }
+    </style>
+</head>
+<body class="text-white">
+
+    <!-- Audio Element -->
+    <audio id="bg-music" loop>
+        <source src="https://dl.boxmusics.ir/songs/400/8/jarico%20u%20orginal%20-%20remix.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Layer -->
+    <div id="ui-layer" class="flex flex-col justify-between">
+        
+        <!-- Music Toggle Button (Top Left) -->
+        <button id="btn-music" class="absolute top-4 left-4 z-[60] glass-panel w-12 h-12 rounded-full flex items-center justify-center text-white text-xl pointer-events-auto transition-all hover:scale-110 active:scale-95 shadow-[0_0_15px_rgba(0,255,255,0.3)] hidden border-cyan-500/30">
+            <i class="fa-solid fa-volume-high"></i>
+        </button>
+
+        <!-- HUD -->
+        <div id="hud" class="hidden pointer-events-auto p-4 flex justify-between items-start mt-12 md:mt-0">
+            <div class="glass-panel px-5 py-3 rounded-2xl flex flex-col gap-2 border-cyan-500/30">
+                <div class="text-lg font-bold text-cyan-400 flex justify-between gap-4">
+                    <span>مرحله: <span id="hud-level" class="text-white">۱</span></span>
+                    <span class="text-yellow-400 border-r border-gray-600 pr-4">سوال: <span id="hud-question">۰/۱۸</span></span>
+                </div>
+                <div class="text-2xl font-black text-white neon-text">امتیاز: <span id="hud-score">۰</span></div>
+            </div>
+            <div class="glass-panel px-4 py-3 rounded-2xl flex gap-2 text-2xl border-pink-500/30" id="hud-lives">
+                <!-- Hearts -->
+            </div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="absolute inset-0 flex items-center justify-center pointer-events-auto p-4 transition-opacity duration-500 z-50">
+            <div class="glass-panel rounded-3xl p-8 w-full max-w-md flex flex-col items-center animate-fade-in relative overflow-hidden border-2 border-cyan-500/20">
+                <div class="absolute -top-20 -right-20 w-48 h-48 bg-cyan-600 rounded-full mix-blend-screen filter blur-[50px] opacity-60"></div>
+                <div class="absolute -bottom-20 -left-20 w-48 h-48 bg-indigo-600 rounded-full mix-blend-screen filter blur-[50px] opacity-60"></div>
+
+                <div class="z-10 flex flex-col items-center w-full">
+                    <i class="fa-solid fa-rocket text-6xl text-cyan-400 mb-4 drop-shadow-[0_0_20px_rgba(34,211,238,1)]"></i>
+                    <h1 class="text-4xl font-black mb-1 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-400">مأموریت فضایی</h1>
+                    <p class="text-sm text-gray-400 mb-8 font-medium bg-black/30 px-3 py-1 rounded-full border border-gray-700">طراح: الهام باقری</p>
+
+                    <div class="w-full mb-6">
+                        <label for="astronaut-name" class="block text-sm font-bold text-cyan-100 mb-2 text-center">نام فضانورد خود را وارد کنید:</label>
+                        <input type="text" id="astronaut-name" placeholder="مثلاً: کاپیتان راد" class="w-full bg-black/60 border-2 border-cyan-500/50 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(34,211,238,0.5)] transition-all text-center text-lg font-bold">
+                    </div>
+
+                    <div class="w-full flex flex-col gap-4">
+                        <button id="btn-to-info" class="w-full bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.6)] transition-all transform hover:scale-105 active:scale-95 text-xl border border-cyan-400/50">
+                            ادامه <i class="fa-solid fa-arrow-left mr-2"></i>
+                        </button>
+                        
+                        <button onclick="window.open('https://eitaa.com/Nevisha', '_blank')" class="w-full bg-indigo-900/40 hover:bg-indigo-800/60 border border-indigo-500/50 text-indigo-100 font-bold py-3 px-6 rounded-xl transition-all text-center flex items-center justify-center">
+                            <i class="fa-solid fa-paper-plane text-orange-400 ml-2"></i> ورود به کانال نویشا
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info (Tutorial) Screen -->
+        <div id="info-screen" class="hidden absolute inset-0 flex items-center justify-center pointer-events-auto p-4 transition-opacity duration-500 z-50 bg-black/40 backdrop-blur-sm">
+            <div class="glass-panel rounded-3xl p-6 w-full max-w-lg flex flex-col items-center animate-fade-in border-2 border-cyan-500/30">
+                <h2 class="text-3xl font-black mb-6 text-cyan-300">روند بازی</h2>
+                
+                <div class="flex flex-col gap-5 w-full mb-8">
+                    <div class="flex items-center gap-4 bg-white/5 p-3 rounded-xl border border-white/10">
+                        <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-2xl shrink-0"><i class="fa-solid fa-arrows-left-right"></i></div>
+                        <p class="text-sm text-gray-200">با دکمه‌های لمسی روی صفحه یا کلیدهای چپ و راست کیبورد، موشک را هدایت کن و از شهاب‌سنگ‌ها جاخالی بده.</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white/5 p-3 rounded-xl border border-white/10">
+                        <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400 text-2xl shrink-0"><i class="fa-solid fa-gift"></i></div>
+                        <p class="text-sm text-gray-200">جعبه‌های کادو را بگیر! بازی <strong class="text-yellow-400">۱۸ سوال</strong> دارد که در لحظه توسط <strong class="text-cyan-400">هوش مصنوعی</strong> تولید می‌شوند.</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white/5 p-3 rounded-xl border border-white/10">
+                        <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-2xl shrink-0"><i class="fa-solid fa-layer-group"></i></div>
+                        <p class="text-sm text-gray-200">بازی <strong class="text-purple-400">۳ مرحله</strong> است. هر ۶ سوالی که پاسخ دهی، سرعت بیشتر و وارد مرحله بعد می‌شوی.</p>
+                    </div>
+                </div>
+
+                <button id="btn-start-game" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 px-6 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.6)] transition-all transform hover:scale-105 active:scale-95 text-xl border border-green-400/50 flex flex-col items-center justify-center">
+                    <div><i class="fa-solid fa-play ml-2"></i> شروع مسابقه!</div>
+                    <div id="ai-loading-status" class="text-xs font-normal mt-1 text-green-200 hidden"><i class="fa-solid fa-spinner fa-spin ml-1"></i> هوش مصنوعی در حال طراحی سوالات اختصاصی...</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Question Modal -->
+        <div id="question-modal" class="hidden absolute inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center pointer-events-auto p-4 z-50">
+            <div class="glass-panel rounded-3xl p-6 w-full max-w-lg border-2 border-yellow-500 shadow-[0_0_50px_rgba(234,179,8,0.3)] animate-fade-in flex flex-col items-center text-center">
+                <div class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(234,179,8,0.8)] border-4 border-yellow-200">
+                    <i class="fa-solid fa-gift text-4xl text-white"></i>
+                </div>
+                <h2 class="text-3xl font-black text-yellow-400 mb-2">سوال فضایی</h2>
+                <div class="text-sm text-yellow-200/70 mb-4 bg-yellow-900/30 px-3 py-1 rounded-full border border-yellow-500/30">سوال <span id="q-counter-modal"></span> از ۱۸</div>
+                <p class="text-white mb-8 text-xl font-bold leading-relaxed" id="question-text">متن سوال؟</p>
+                
+                <div class="w-full grid grid-cols-1 gap-3" id="answers-container">
+                    <!-- Answers generated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- End Screen (Report Card) -->
+        <div id="end-screen" class="hidden absolute inset-0 bg-black/95 flex items-center justify-center pointer-events-auto p-4 z-50 backdrop-blur-xl">
+            <div class="glass-panel rounded-3xl p-8 w-full max-w-md animate-fade-in relative overflow-hidden border-2 border-purple-500 shadow-[0_0_60px_rgba(168,85,247,0.3)]">
+                <div class="absolute -top-20 -left-20 w-64 h-64 bg-purple-600 rounded-full mix-blend-screen filter blur-[60px] opacity-40"></div>
+                
+                <div class="z-10 flex flex-col items-center w-full">
+                    <div id="end-icon" class="text-7xl mb-2 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">🏆</div>
+                    <h2 class="text-3xl font-black mb-1 text-white" id="end-title">کارنامه مأموریت</h2>
+                    <p class="text-sm text-purple-300 mb-6 bg-purple-900/30 px-3 py-1 rounded-full border border-purple-500/30">طراح: الهام باقری</p>
+
+                    <div class="w-full bg-black/60 rounded-2xl p-5 mb-6 border border-purple-500/30 shadow-inner">
+                        <div class="flex justify-between items-center mb-3 pb-3 border-b border-white/10">
+                            <span class="text-gray-300">فضانورد:</span>
+                            <span class="font-bold text-xl text-cyan-400" id="report-name">کاپیتان</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-3 pb-3 border-b border-white/10">
+                            <span class="text-gray-300">امتیاز نهایی:</span>
+                            <span class="font-black text-2xl text-yellow-400 neon-text-yellow" id="report-score">۱۵۰۰</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-3 pb-3 border-b border-white/10">
+                            <span class="text-gray-300">سوالات پاسخ داده:</span>
+                            <span class="font-bold text-xl text-green-400" id="report-questions">۱۸/۱۸</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300">رسیده به مرحله:</span>
+                            <span class="font-bold text-xl text-purple-400" id="report-level">۳</span>
+                        </div>
+                    </div>
+
+                    <!-- AI Mission Report Container -->
+                    <div id="ai-report-container" class="w-full bg-indigo-900/40 rounded-xl p-4 mb-6 border border-indigo-500/50 shadow-inner hidden">
+                        <div class="text-indigo-300 text-xs mb-1 flex items-center"><i class="fa-solid fa-robot ml-1 text-cyan-400"></i> پیام فرماندهی (AI):</div>
+                        <p id="ai-report-text" class="text-sm text-white font-medium leading-relaxed">در حال برقراری ارتباط...</p>
+                    </div>
+
+                    <div class="w-full flex flex-col gap-4">
+                        <button id="btn-restart" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3 px-6 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.6)] transition-all transform hover:scale-105 active:scale-95 text-lg border border-pink-400/50">
+                            <i class="fa-solid fa-rotate-right ml-2"></i> بازی دوباره
+                        </button>
+                        
+                        <button onclick="window.open('https://eitaa.com/Nevisha', '_blank')" class="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold py-3 px-6 rounded-xl transition-all text-center flex items-center justify-center">
+                            <i class="fa-solid fa-paper-plane text-orange-400 ml-2"></i> کانال نویشا در ایتا
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Message -->
+        <div id="toast-message" class="fixed -top-[100px] left-1/2 transform -translate-x-1/2 glass-panel px-6 py-3 rounded-full font-bold text-lg text-white z-[70] flex items-center gap-3 border border-white/20">
+            <i id="toast-icon" class="fa-solid fa-check-circle text-green-400 text-xl"></i>
+            <span id="toast-text">پیام</span>
+        </div>
+
+        <!-- Mobile Controls -->
+        <!-- DIR="LTR" ensures left button is actually on the left side of the screen -->
+        <div id="mobile-controls" dir="ltr" class="hidden absolute bottom-8 left-0 w-full px-4 flex justify-between pointer-events-auto z-40">
+            <!-- Left Button -->
+            <button id="btn-left" class="mobile-btn w-24 h-24 rounded-full flex items-center justify-center text-white/80 text-5xl shadow-[0_0_20px_rgba(0,255,255,0.2)]">
+                <i class="fa-solid fa-caret-left"></i>
+            </button>
+            <!-- Right Button -->
+            <button id="btn-right" class="mobile-btn w-24 h-24 rounded-full flex items-center justify-center text-white/80 text-5xl shadow-[0_0_20px_rgba(0,255,255,0.2)]">
+                <i class="fa-solid fa-caret-right"></i>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        /**
+         * Space Race 3D Pro (Final)
+         * Developer: Elham Bagheri
+         * Tech: HTML5, Tailwind, Three.js, Audio API
+         */
+
+        // --- Game Constants & State ---
+        const MAX_LIVES = 5;
+        const TOTAL_QUESTIONS = 18;
+        const QUESTIONS_PER_LEVEL = 6;
+        const LANES = [-3.5, 0, 3.5]; // Left, Center, Right
+
+        const gameState = {
+            status: 'start', // start, info, playing, paused, gameover, victory
+            score: 0,
+            lives: MAX_LIVES,
+            level: 1,
+            speed: 0.5, // Base speed
+            astronautName: '',
+            questionsAsked: 0,
+            targetX: 0, 
+            distanceTraveled: 0
+        };
+
+        // --- Gemini AI State ---
+        const API_KEY = ""; // Automatically injected
+        let aiQuestions = [];
+
+        // --- Persian Numeral Helper ---
+        const toPersianNum = num => num.toString().replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+
+        // --- Audio Management ---
+        const bgMusic = document.getElementById('bg-music');
+        const btnMusic = document.getElementById('btn-music');
+        let isMusicPlaying = false;
+        
+        bgMusic.volume = 0.5; // Set volume to 50%
+
+        btnMusic.addEventListener('click', () => {
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                btnMusic.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                btnMusic.classList.add('text-gray-400');
+                btnMusic.classList.remove('border-cyan-500/30', 'shadow-[0_0_15px_rgba(0,255,255,0.3)]');
+            } else {
+                bgMusic.play();
+                btnMusic.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                btnMusic.classList.remove('text-gray-400');
+                btnMusic.classList.add('border-cyan-500/30', 'shadow-[0_0_15px_rgba(0,255,255,0.3)]');
+            }
+            isMusicPlaying = !isMusicPlaying;
+        });
+
+        // --- UI Elements ---
+        const ui = {
+            startScreen: document.getElementById('start-screen'),
+            infoScreen: document.getElementById('info-screen'),
+            endScreen: document.getElementById('end-screen'),
+            hud: document.getElementById('hud'),
+            mobileControls: document.getElementById('mobile-controls'),
+            questionModal: document.getElementById('question-modal'),
+            nameInput: document.getElementById('astronaut-name'),
+            hudLives: document.getElementById('hud-lives'),
+            hudScore: document.getElementById('hud-score'),
+            hudLevel: document.getElementById('hud-level'),
+            hudQuestion: document.getElementById('hud-question'),
+            qCounterModal: document.getElementById('q-counter-modal'),
+            toast: document.getElementById('toast-message'),
+            toastIcon: document.getElementById('toast-icon'),
+            toastText: document.getElementById('toast-text'),
+            questionText: document.getElementById('question-text'),
+            answersContainer: document.getElementById('answers-container'),
+            reportName: document.getElementById('report-name'),
+            reportScore: document.getElementById('report-score'),
+            reportLevel: document.getElementById('report-level'),
+            reportQuestions: document.getElementById('report-questions'),
+            endIcon: document.getElementById('end-icon'),
+            endTitle: document.getElementById('end-title'),
+            btnStartGame: document.getElementById('btn-start-game'),
+            aiLoadingStatus: document.getElementById('ai-loading-status'),
+            aiReportContainer: document.getElementById('ai-report-container'),
+            aiReportText: document.getElementById('ai-report-text')
+        };
+
+        // --- Three.js Setup (Realistic Environment) ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x02020a, 0.012);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 6, 14);
+        camera.lookAt(0, 0, -20);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0x202040, 2);
+        scene.add(ambientLight);
+        
+        const pointLight = new THREE.PointLight(0x00ffff, 1.5, 100);
+        pointLight.position.set(0, 10, 0);
+        scene.add(pointLight);
+
+        // --- Environment Objects ---
+        
+        // 1. Better Stars (Particles)
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsMaterial = new THREE.PointsMaterial({ 
+            color: 0xffffff, size: 0.15, transparent: true, opacity: 0.9, sizeAttenuation: true 
+        });
+        const starsVertices = [];
+        for(let i = 0; i < 3000; i++) {
+            starsVertices.push(
+                (Math.random() - 0.5) * 200, 
+                (Math.random() - 0.5) * 100 + 20, 
+                (Math.random() - 0.5) * 300 - 100
+            );
+        }
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+        const stars = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(stars);
+
+        // 2. Background Planet
+        const planetGeo = new THREE.SphereGeometry(60, 32, 32);
+        const planetMat = new THREE.MeshStandardMaterial({ 
+            color: 0x112244, roughness: 0.9, emissive: 0x051025
+        });
+        const planet = new THREE.Mesh(planetGeo, planetMat);
+        planet.position.set(50, -10, -250);
+        scene.add(planet);
+
+        // 3. Grid / Warp lines (Floor)
+        const gridHelper = new THREE.GridHelper(300, 100, 0x00ffff, 0x110033);
+        gridHelper.position.y = -1.5;
+        scene.add(gridHelper);
+
+        // --- Player Rocket ---
+        const rocket = new THREE.Group();
+        
+        // Body
+        const bodyGeo = new THREE.CylinderGeometry(0.6, 0.8, 3.5, 16);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xddeeff, metalness: 0.6, roughness: 0.2 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.rotation.x = Math.PI / 2;
+        
+        // Nose
+        const noseGeo = new THREE.ConeGeometry(0.6, 1.5, 16);
+        const noseMat = new THREE.MeshStandardMaterial({ color: 0xff1144, metalness: 0.4, roughness: 0.2 });
+        const nose = new THREE.Mesh(noseGeo, noseMat);
+        nose.position.z = -2.5;
+        nose.rotation.x = -Math.PI / 2;
+
+        // Wings
+        const wingGeo = new THREE.BoxGeometry(3, 0.1, 1.5);
+        const wingMat = new THREE.MeshStandardMaterial({ color: 0x00aaff, metalness: 0.5 });
+        const wings = new THREE.Mesh(wingGeo, wingMat);
+        wings.position.set(0, -0.2, 0.8);
+
+        // Engine Thruster Glow
+        const engineGeo = new THREE.CylinderGeometry(0.5, 0.2, 1.5, 16);
+        const engineMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
+        const engine = new THREE.Mesh(engineGeo, engineMat);
+        engine.position.z = 2.2;
+        engine.rotation.x = Math.PI / 2;
+
+        rocket.add(body, nose, wings, engine);
+        rocket.position.set(0, 0, 0);
+        scene.add(rocket);
+
+        // --- Object Managers ---
+        let obstacles = [];
+        let gifts = [];
+        let objectsGroup = new THREE.Group();
+        scene.add(objectsGroup);
+
+        // Geometries
+        const rockGeo = new THREE.DodecahedronGeometry(1.2, 1);
+        const rockMat = new THREE.MeshStandardMaterial({ color: 0x555566, roughness: 0.9, flatShading: true });
+        const rockDangerMat = new THREE.MeshStandardMaterial({ color: 0x882222, emissive: 0x330000, flatShading: true }); 
+
+        // Realistic Gift Box
+        function createGiftMesh() {
+            const group = new THREE.Group();
+            
+            const box = new THREE.Mesh(
+                new THREE.BoxGeometry(1.4, 1.4, 1.4),
+                new THREE.MeshStandardMaterial({ color: 0xff2255, roughness: 0.3 })
+            );
+            
+            const ribbonMat = new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.8, roughness: 0.2 });
+            const ribbon1 = new THREE.Mesh(new THREE.BoxGeometry(1.45, 1.45, 0.2), ribbonMat);
+            const ribbon2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.45, 1.45), ribbonMat);
+            
+            group.add(box, ribbon1, ribbon2);
+            return group;
+        }
+
+        // --- Functions ---
+
+        function spawnObstacle() {
+            if (gameState.status !== 'playing') return;
+            const rock = new THREE.Mesh(rockGeo, Math.random() > 0.7 ? rockDangerMat : rockMat);
+            const lane = LANES[Math.floor(Math.random() * LANES.length)];
+            
+            rock.position.set(lane, 0, -120);
+            rock.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
+            rock.scale.setScalar(Math.random() * 0.5 + 0.8);
+            objectsGroup.add(rock);
+            obstacles.push(rock);
+        }
+
+        function spawnGift() {
+            if (gameState.status !== 'playing') return;
+            if (gameState.questionsAsked >= TOTAL_QUESTIONS) return;
+
+            const gift = createGiftMesh();
+            const lane = LANES[Math.floor(Math.random() * LANES.length)];
+            gift.position.set(lane, 0.5, -120);
+            objectsGroup.add(gift);
+            gifts.push(gift);
+        }
+
+        function updateHUD() {
+            ui.hudScore.innerText = toPersianNum(gameState.score);
+            ui.hudLevel.innerText = toPersianNum(gameState.level);
+            ui.hudQuestion.innerText = `${toPersianNum(gameState.questionsAsked)}/${toPersianNum(TOTAL_QUESTIONS)}`;
+            
+            ui.hudLives.innerHTML = '';
+            for(let i=0; i<MAX_LIVES; i++) {
+                if(i < gameState.lives) {
+                    ui.hudLives.innerHTML += '<i class="fa-solid fa-heart heart-active"></i>';
+                } else {
+                    ui.hudLives.innerHTML += '<i class="fa-solid fa-heart heart-empty"></i>';
+                }
+            }
+        }
+
+        function showToast(message, isSuccess = true) {
+            ui.toastText.innerText = message;
+            ui.toastIcon.className = isSuccess ? 'fa-solid fa-check-circle text-green-400 text-xl' : 'fa-solid fa-triangle-exclamation text-red-500 text-xl';
+            ui.toast.classList.remove('hidden', 'toast-show');
+            void ui.toast.offsetWidth;
+            ui.toast.classList.add('toast-show');
+        }
+
+        function endGame(isVictory = false) {
+            gameState.status = isVictory ? 'victory' : 'gameover';
+            ui.hud.classList.add('hidden');
+            ui.mobileControls.classList.add('hidden');
+            
+            ui.reportName.innerText = gameState.astronautName;
+            ui.reportScore.innerText = toPersianNum(gameState.score);
+            ui.reportLevel.innerText = toPersianNum(gameState.level);
+            ui.reportQuestions.innerText = `${toPersianNum(gameState.questionsAsked)}/${toPersianNum(TOTAL_QUESTIONS)}`;
+            
+            if(isVictory) {
+                ui.endIcon.innerText = '🏆';
+                ui.endTitle.innerText = 'تبریک! مأموریت موفق بود';
+                ui.endTitle.className = "text-3xl font-black mb-1 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600";
+            } else {
+                ui.endIcon.innerText = '💥';
+                ui.endTitle.innerText = 'مأموریت ناتمام ماند';
+                ui.endTitle.className = "text-3xl font-black mb-1 text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-600";
+            }
+
+            ui.endScreen.classList.remove('hidden');
+
+            // Trigger Gemini AI Report Generation
+            ui.aiReportContainer.classList.remove('hidden');
+            ui.aiReportText.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-cyan-400 ml-2"></i> در حال دریافت پیام فرماندهی...';
+            
+            fetchAIReport(gameState.astronautName, gameState.score, gameState.level, isVictory).then(report => {
+                ui.aiReportText.innerText = report;
+            });
+        }
+
+        // --- Educational Logic ---
+
+        function showQuestionModal() {
+            gameState.status = 'paused';
+            gameState.questionsAsked++; 
+            
+            ui.qCounterModal.innerText = toPersianNum(gameState.questionsAsked);
+            updateHUD();
+
+            let question = '';
+            let options = [];
+            let correctIndex = 0;
+
+            // Check if we have dynamically generated AI questions
+            if (aiQuestions && aiQuestions.length > 0) {
+                const aiQ = aiQuestions.shift(); // Pull the next AI question
+                question = aiQ.question;
+                options = aiQ.options;
+                correctIndex = aiQ.correctIndex;
+            } else {
+                // Fallback to offline math questions if AI questions run out or fail
+                const type = Math.floor(Math.random() * 3);
+                
+                if (type === 0) {
+                    // Odd/Even
+                    const num = Math.floor(Math.random() * 999) + 1;
+                    question = `عدد ${toPersianNum(num)} زوج است یا فرد؟`;
+                    options = ['زوج', 'فرد'];
+                    correctIndex = (num % 2 === 0) ? 0 : 1;
+                } 
+                else if (type === 1) {
+                    // Time
+                    const hour24 = Math.floor(Math.random() * 11) + 13; 
+                    question = `ساعت ${toPersianNum(hour24)} معادل چه ساعتی در بعدازظهر است؟`;
+                    const hour12 = hour24 - 12;
+                    let fake1 = hour12 === 11 ? 1 : hour12 + 1;
+                    let fake2 = hour12 === 1 ? 11 : hour12 - 1;
+                    options = [`${toPersianNum(fake1)} بعدازظهر`, `${toPersianNum(hour12)} بعدازظهر`, `${toPersianNum(fake2)} بعدازظهر`];
+                    options = options.sort(() => Math.random() - 0.5);
+                    correctIndex = options.indexOf(`${toPersianNum(hour12)} بعدازظهر`);
+                }
+                else {
+                    // Multiplication
+                    const a = Math.floor(Math.random() * 8) + 2; 
+                    const b = Math.floor(Math.random() * 8) + 2; 
+                    const ans = a * b;
+                    question = `حاصل ضرب ${toPersianNum(a)} × ${toPersianNum(b)} چند می‌شود؟`;
+                    let fake1 = ans + a;
+                    let fake2 = ans - b;
+                    if(fake2 === ans || fake2 < 0) fake2 = ans + b + 1;
+                    options = [toPersianNum(ans), toPersianNum(fake1), toPersianNum(fake2)];
+                    options = options.sort(() => Math.random() - 0.5);
+                    correctIndex = options.findIndex(v => v === toPersianNum(ans));
+                }
+            }
+
+            ui.questionText.innerText = question;
+            ui.answersContainer.innerHTML = '';
+            
+            options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full bg-indigo-900/40 hover:bg-indigo-600/60 border border-indigo-400/30 text-white font-bold py-4 px-4 rounded-xl transition-all text-xl';
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(idx === correctIndex);
+                ui.answersContainer.appendChild(btn);
+            });
+
+            ui.questionModal.classList.remove('hidden');
+        }
+
+        function handleAnswer(isCorrect) {
+            ui.questionModal.classList.add('hidden');
+            
+            if (isCorrect) {
+                if (gameState.lives < MAX_LIVES) {
+                    gameState.lives++;
+                    showToast('آفرین! یک جان اضافه شد', true);
+                } else {
+                    gameState.score += 20;
+                    showToast('آفرین! ۲۰ امتیاز گرفتی', true);
+                }
+            } else {
+                showToast('اشتباه جواب دادی! بیشتر دقت کن', false);
+            }
+            
+            updateHUD();
+
+            if (gameState.questionsAsked >= TOTAL_QUESTIONS) {
+                setTimeout(() => endGame(true), 1000);
+                return;
+            }
+
+            if (gameState.questionsAsked === 6 && gameState.level === 1) {
+                gameState.level = 2;
+                gameState.speed = 0.7; 
+                scene.fog.color.setHex(0x1a0525); 
+                setTimeout(() => showToast('ورود به مرحله ۲! سرعت بیشتر شد', true), 1500);
+            } else if (gameState.questionsAsked === 12 && gameState.level === 2) {
+                gameState.level = 3;
+                gameState.speed = 0.95; 
+                scene.fog.color.setHex(0x250505); 
+                setTimeout(() => showToast('ورود به مرحله ۳! نهایت سرعت', true), 1500);
+            }
+            
+            updateHUD();
+            
+            setTimeout(() => {
+                if(gameState.status !== 'gameover' && gameState.status !== 'victory') {
+                    gameState.status = 'playing';
+                }
+            }, 1000);
+        }
+
+        // --- Controls ---
+        
+        function moveLeft() {
+            if (gameState.status !== 'playing') return;
+            const currentIndex = LANES.indexOf(gameState.targetX);
+            if (currentIndex > 0) gameState.targetX = LANES[currentIndex - 1]; // Move index to left
+        }
+
+        function moveRight() {
+            if (gameState.status !== 'playing') return;
+            const currentIndex = LANES.indexOf(gameState.targetX);
+            if (currentIndex < LANES.length - 1) gameState.targetX = LANES[currentIndex + 1]; // Move index to right
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') moveLeft();
+            if (e.key === 'ArrowRight') moveRight();
+        });
+
+        // Touch and Mouse Controls
+        document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); moveLeft(); });
+        document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); moveRight(); });
+        document.getElementById('btn-left').addEventListener('mousedown', moveLeft);
+        document.getElementById('btn-right').addEventListener('mousedown', moveRight);
+
+        // --- Game Flow UI ---
+
+        document.getElementById('btn-to-info').addEventListener('click', () => {
+            const name = ui.nameInput.value.trim();
+            gameState.astronautName = name || 'فضانورد ناشناس';
+            
+            ui.startScreen.classList.add('opacity-0');
+            setTimeout(() => {
+                ui.startScreen.classList.add('hidden');
+                ui.infoScreen.classList.remove('hidden');
+            }, 500);
+        });
+
+        // --- Gemini AI Integration Functions ---
+        async function fetchAIQuestions() {
+            try {
+                const payload = {
+                    contents: [{ parts: [{ text: "لطفاً ۱۸ سوال آموزشی چندگزینه‌ای (فقط و دقیقا ۳ گزینه پاسخ) به زبان فارسی برای کودکان طراحی کن. موضوعات سوالات ترکیبی از فضا، نجوم و علوم پایه باشد. سوالات به ترتیب از ساده به سخت مرتب شوند (۶ سوال ساده، ۶ متوسط، ۶ سخت). هیچ متنی اضافه نکن و مستقیما فقط آرایه JSON را بفرست." }] }],
+                    systemInstruction: { parts: [{ text: "شما هوش مصنوعی طراح بازی آموزشی هستید. لطفا فقط JSON خروجی دهید." }] },
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    question: { type: "STRING", description: "متن سوال به زبان فارسی" },
+                                    options: { type: "ARRAY", items: { type: "STRING" }, description: "دقیقا ۳ گزینه به زبان فارسی" },
+                                    correctIndex: { type: "INTEGER", description: "ایندکس پاسخ صحیح (0 یا 1 یا 2)" }
+                                },
+                                propertyOrdering: ["question", "options", "correctIndex"]
+                            }
+                        }
+                    }
+                };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates[0].content) {
+                    const jsonStr = result.candidates[0].content.parts[0].text;
+                    return JSON.parse(jsonStr);
+                }
+                return null;
+            } catch (error) {
+                console.error("AI Error generating questions:", error);
+                return null; // Fallback handled gracefully
+            }
+        }
+
+        async function fetchAIReport(name, score, level, isVictory) {
+            try {
+                const state = isVictory ? "با موفقیت به پایان رساند" : "شکست خورد و سفینه‌اش آسیب دید";
+                const prompt = `بازیکن به نام "${name}" مأموریت فضایی را ${state}. او به مرحله ${level} رسید و ${score} امتیاز کسب کرد. یک پیام کوتاه (حداکثر ۲ جمله) و هیجان‌انگیز به زبان فارسی از طرف فرماندهی فضایی برای او بنویس. این پیام در کارنامه نهایی او ثبت میشود.`;
+                const payload = { contents: [{ parts: [{ text: prompt }] }] };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates[0].content) {
+                    return result.candidates[0].content.parts[0].text;
+                }
+                return "فرماندهی فضایی از تلاش شما قدردانی می‌کند!";
+            } catch (error) {
+                console.error("AI Error generating report:", error);
+                return "ارتباط با فرماندهی فضایی قطع شد، اما ما به شما افتخار می‌کنیم!";
+            }
+        }
+
+        ui.btnStartGame.addEventListener('click', async () => {
+            // Loading State for AI
+            ui.btnStartGame.disabled = true;
+            ui.aiLoadingStatus.classList.remove('hidden');
+            ui.btnStartGame.classList.add('opacity-80', 'cursor-not-allowed');
+
+            // Generate Questions using Gemini AI
+            const generated = await fetchAIQuestions();
+            if (generated && generated.length > 0) {
+                aiQuestions = generated;
+                showToast('سوالات فضایی توسط هوش مصنوعی طراحی شد!', true);
+            } else {
+                showToast('هوش مصنوعی در دسترس نیست، استفاده از سوالات پشتیبان.', false);
+            }
+
+            ui.infoScreen.classList.add('opacity-0');
+            setTimeout(() => {
+                ui.infoScreen.classList.add('hidden');
+                ui.infoScreen.classList.remove('opacity-0');
+                
+                // Reset Button state
+                ui.btnStartGame.disabled = false;
+                ui.aiLoadingStatus.classList.add('hidden');
+                ui.btnStartGame.classList.remove('opacity-80', 'cursor-not-allowed');
+                
+                ui.hud.classList.remove('hidden');
+                ui.mobileControls.classList.remove('hidden');
+                btnMusic.classList.remove('hidden'); // Show music button
+                
+                // Try playing music automatically when game starts
+                bgMusic.play().then(() => {
+                    isMusicPlaying = true;
+                    btnMusic.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                    btnMusic.classList.remove('text-gray-400');
+                }).catch(e => console.log("Auto-play prevented"));
+
+                resetGame();
+                gameState.status = 'playing';
+            }, 500);
+        });
+
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            ui.endScreen.classList.add('hidden');
+            resetGame();
+            gameState.status = 'playing';
+            ui.hud.classList.remove('hidden');
+            ui.mobileControls.classList.remove('hidden');
+        });
+
+        function resetGame() {
+            gameState.score = 0;
+            gameState.lives = MAX_LIVES;
+            gameState.level = 1;
+            gameState.speed = 0.5;
+            gameState.questionsAsked = 0;
+            gameState.targetX = 0;
+            gameState.distanceTraveled = 0;
+            rocket.position.x = 0;
+            scene.fog.color.setHex(0x02020a); 
+            
+            obstacles.forEach(o => objectsGroup.remove(o));
+            gifts.forEach(g => objectsGroup.remove(g));
+            obstacles = [];
+            gifts = [];
+
+            updateHUD();
+        }
+
+        // --- Main Animation Loop ---
+
+        const clock = new THREE.Clock();
+        let spawnTimer = 0;
+        let giftTimer = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Idle Animations
+            planet.rotation.y += 0.001;
+            gifts.forEach(g => {
+                g.rotation.x += 0.015;
+                g.rotation.y += 0.015;
+            });
+
+            if (gameState.status !== 'playing') {
+                renderer.render(scene, camera);
+                return;
+            }
+
+            const delta = clock.getDelta();
+            
+            // Smooth movement
+            rocket.position.x += (gameState.targetX - rocket.position.x) * 0.15;
+            rocket.rotation.y = (rocket.position.x - gameState.targetX) * 0.15; 
+            rocket.rotation.z = (gameState.targetX - rocket.position.x) * 0.15;
+
+            // Engine pulse
+            engine.scale.y = 1 + Math.sin(Date.now() * 0.03) * 0.3;
+            engine.material.opacity = 0.5 + Math.sin(Date.now() * 0.05) * 0.5;
+
+            // Move Environment
+            const moveSpeed = gameState.speed * 60 * delta;
+            gridHelper.position.z += gameState.speed * 1.5;
+            if (gridHelper.position.z > 10) gridHelper.position.z = 0;
+
+            const positions = stars.geometry.attributes.position.array;
+            for(let i=2; i<positions.length; i+=3) {
+                positions[i] += gameState.speed * 3;
+                if(positions[i] > 50) positions[i] = -200;
+            }
+            stars.geometry.attributes.position.needsUpdate = true;
+
+            // Distance & Score
+            gameState.distanceTraveled += moveSpeed;
+            if(Math.floor(gameState.distanceTraveled) % 15 === 0) {
+                gameState.score += 1;
+                updateHUD();
+            }
+
+            // Spawning Logic
+            spawnTimer += delta;
+            const rockSpawnRate = Math.max(0.6, 1.5 - (gameState.level * 0.25)); 
+            if (spawnTimer > rockSpawnRate) {
+                spawnObstacle();
+                spawnTimer = 0;
+            }
+
+            giftTimer += delta;
+            const giftSpawnRate = 4.0; 
+            if (giftTimer > giftSpawnRate) {
+                spawnGift();
+                giftTimer = 0;
+            }
+
+            // Move Obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.position.z += moveSpeed;
+                obs.rotation.x += 0.02;
+                obs.rotation.y += 0.01;
+                
+                // Collision
+                if (obs.position.z > -3 && obs.position.z < 2) {
+                    if (Math.abs(obs.position.x - rocket.position.x) < 1.5) {
+                        objectsGroup.remove(obs);
+                        obstacles.splice(i, 1);
+                        gameState.lives--;
+                        updateHUD();
+                        
+                        camera.position.x = (Math.random() - 0.5) * 1.5;
+                        setTimeout(() => camera.position.x = 0, 100);
+                        
+                        engine.material.color.setHex(0xff0000);
+                        setTimeout(() => engine.material.color.setHex(0x00ffff), 200);
+
+                        if (gameState.lives <= 0) {
+                            endGame(false);
+                        } else {
+                            showToast('برخورد با مانع! یک جان کم شد', false);
+                        }
+                        continue;
+                    }
+                }
+
+                if (obs.position.z > 15) {
+                    objectsGroup.remove(obs);
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            // Move Gifts
+            for (let i = gifts.length - 1; i >= 0; i--) {
+                const gift = gifts[i];
+                gift.position.z += moveSpeed;
+                
+                // Collision with Gift
+                if (gift.position.z > -3 && gift.position.z < 2) {
+                    if (Math.abs(gift.position.x - rocket.position.x) < 1.8) { 
+                        objectsGroup.remove(gift);
+                        gifts.splice(i, 1);
+                        showQuestionModal();
+                        continue;
+                    }
+                }
+
+                if (gift.position.z > 15) {
+                    objectsGroup.remove(gift);
+                    gifts.splice(i, 1);
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start Loop
+        animate();
+
+    </script>
+</body>
+</html>
