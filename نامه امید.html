@@ -1,0 +1,423 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بازی املای امید</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* تنظیمات دقیق پس‌زمینه برای لود شدن با اینترنت */
+            background-color: #f8cdda; /* رنگ جایگزین تا زمان لود عکس */
+            background-image: url('https://uploadkon.ir/uploads/00a424_264edd607b98b601b4ce3f70c2c67649fb.jpg');
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+            color: #333;
+        }
+
+        /* گل های شناور کوچک */
+        .flower {
+            position: absolute;
+            font-size: 1rem;
+            animation: floatUp linear infinite;
+            opacity: 0.6;
+            z-index: 0;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* پنل ها - قرارگیری وسط صفحه */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            margin: auto;
+            border: 2px solid rgba(255, 182, 193, 0.6);
+            max-height: calc(100vh - 120px); /* برای جلوگیری از تداخل با فوتر */
+            overflow-y: auto;
+        }
+
+        #game-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            position: relative;
+            z-index: 10;
+            padding-bottom: 30px; /* تنظیم برای وسط قرار گرفتن دقیق روی موبایل */
+            box-sizing: border-box;
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.4s ease-in; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h1, h2 { color: #d11a8b; }
+
+        input[type="text"] {
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 2px solid #ff69b4;
+            border-radius: 10px;
+            width: 80%;
+            margin-bottom: 20px;
+            text-align: center;
+            outline: none;
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff69b4, #da70d6);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(218, 112, 214, 0.5);
+            transition: transform 0.2s;
+            outline: none; /* حذف حاشیه آبی هنگام کلیک */
+        }
+
+        button:hover { transform: translateY(-3px) scale(1.05); }
+
+        .nevisha-btn {
+            background: linear-gradient(45deg, #00b09b, #96c93d);
+        }
+
+        /* رفع کامل مشکل سایه و رنگ دکمه کلمات */
+        .word-btn {
+            background: #fff !important; /* ثابت کردن رنگ سفید */
+            color: #d11a8b;
+            border: 3px solid #ff69b4;
+            font-size: 1.5rem;
+            padding: 15px 40px;
+            margin: 15px;
+            border-radius: 15px;
+            width: 200px;
+            box-shadow: none !important; /* حذف سایه ارث بری شده */
+            -webkit-tap-highlight-color: transparent; 
+        }
+        
+        /* افکت هاور فقط در دستگاه های غیر لمسی اجرا شود تا رنگ گیر نکند */
+        @media (hover: hover) {
+            .word-btn:hover { background: #ffe4e1 !important; }
+        }
+        
+        .word-btn:active { background: #fff !important; box-shadow: none !important; transform: scale(0.98); } 
+
+        /* پیام انگیزشی */
+        #feedback-msg {
+            display: none;
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #32cd32;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(50, 205, 50, 0.8);
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        /* دکمه آهنگ */
+        #audio-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #ff69b4;
+        }
+
+        /* فوتر */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 0;
+            font-weight: bold;
+            color: #fff;
+            z-index: 100;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop>
+        <source src="https://uploadkon.ir/uploads/8b0324_26Careless-Whisper.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="audio-toggle" onclick="toggleAudio()">🎵</div>
+
+    <div id="flowers-container"></div>
+
+    <div id="game-container">
+        <!-- پیام انگیزشی -->
+        <div id="feedback-msg">آفرین! 🌟</div>
+
+        <!-- صفحه اول -->
+        <div id="screen-intro" class="glass-panel screen active">
+            <h1>سلام! به بازی املای امید خوش آمدی 🌸</h1>
+            <p>لطفاً نام و نام خانوادگی خودت رو بنویس:</p>
+            <input type="text" id="student-name" placeholder="نام شما...">
+            <br>
+            <button onclick="goToStory()">شروع بازی</button>
+            <br>
+            <a href="https://eitaa.com/Nevisha" target="_blank">
+                <button class="nevisha-btn">بازی بیشتر در نِویشا</button>
+            </a>
+        </div>
+
+        <!-- صفحه دوم -->
+        <div id="screen-story" class="glass-panel screen">
+            <h2>کمک به امید 📝</h2>
+            <p>امید در حال نوشتن نامه‌ای است اما در املا شک دارد. آماده‌ای کمک کنی؟</p>
+            <button onclick="startGame()">بله، آماده‌ام!</button>
+        </div>
+
+        <!-- صفحه بازی -->
+        <div id="screen-game" class="glass-panel screen">
+            <h3 style="color:#8b008b;">کلمه <span id="current-q">1</span> از 10</h3>
+            <h2>کدام املا درست است؟</h2>
+            <div id="buttons-container">
+                <button class="word-btn" id="btn-1" onclick="checkAnswer(1)"></button>
+                <button class="word-btn" id="btn-2" onclick="checkAnswer(2)"></button>
+            </div>
+        </div>
+
+        <!-- کارنامه -->
+        <div id="screen-result" class="glass-panel screen">
+            <h2>نامه امید به شما 💌</h2>
+            <div style="background: #fff0f5; padding: 15px; border-radius: 10px; text-align: right;" id="final-letter"></div>
+            <h3 style="color: #4b0082;">کارنامه: <span id="score-text"></span> از 10</h3>
+            <button onclick="resetGame()">بازی دوباره 🔄</button>
+            <br>
+            <a href="https://eitaa.com/Nevisha" target="_blank">
+                <button class="nevisha-btn">بازی بیشتر در نِویشا</button>
+            </a>
+        </div>
+    </div>
+
+    <div class="footer">طراح: الهام باقری</div>
+
+    <script>
+        // لیست کامل کلمات درخواست شده
+        const wordBank = [
+            { c: "سپاسگزارم", w: "سپاسگذارم" }, { c: "فصل", w: "فسل" },
+            { c: "محبت", w: "مهبت" }, { c: "سراغ", w: "صراغ" },
+            { c: "مسافرت فضایی", w: "مسافرت فزایی" }, { c: "نشاط", w: "نشات" },
+            { c: "عظمت", w: "عزمت" }, { c: "آغاز", w: "آقاز" },
+            { c: "مواظبت", w: "مواضبت" }, { c: "استراحت", w: "استراهت" },
+            { c: "غوطه", w: "غوته" }, { c: "علاقه", w: "الاقه" },
+            { c: "علم و صنعت", w: "علم و سنت" }, { c: "وطن", w: "وتن" },
+            { c: "مناطق", w: "مناتق" }, { c: "موفق", w: "موفغ" },
+            { c: "باعث", w: "باعس" }, { c: "صحبت", w: "صهبت" },
+            { c: "صبور", w: "ثبور" }, { c: "حاتم طایی", w: "حاتم تایی" },
+            { c: "سماط", w: "سمات" }, { c: "حاصل", w: "حاسل" },
+            { c: "صحرا", w: "سهرا" }, { c: "آغوش", w: "آقوش" },
+            { c: "لحظه", w: "لحزه" }, { c: "متوجه", w: "متوجح" },
+            { c: "توضیح", w: "توزیح" }, { c: "ضربان", w: "زربان" },
+            { c: "نغمه", w: "نقمه" }, { c: "غایب", w: "قایب" },
+            { c: "طبیعت", w: "تبیعت" }, { c: "عطر بهشتی", w: "اتر بهشتی" },
+            { c: "لطیف", w: "لتیف" }, { c: "ضعیف", w: "ظعیف" },
+            { c: "گودال", w: "قودال" }, { c: "تصمیم", w: "تسمیم" },
+            { c: "احترام", w: "اهترام" }, { c: "مسیرحرکت قطار", w: "مسیرحرکت قتار" },
+            { c: "واقعه", w: "واقئه" }, { c: "عدّه ای", w: "ادّه ای" },
+            { c: "حتمی", w: "هتمی" }, { c: "جنگ تحمیلی", w: "جنگ تهمیلی" },
+            { c: "ثبت نام", w: "سبت نام" }, { c: "پیشروی", w: "پیشرویی" },
+            { c: "طفل", w: "تفل" }, { c: "سهام خیّام", w: "صهام خیّام" },
+            { c: "موفّقیت", w: "موفغیت" }, { c: "ریزعلی خواجوی", w: "ریزعلی خاجوی" },
+            { c: "انتظار", w: "انتزار" }, { c: "کشتزار", w: "کشطزار" },
+            { c: "خویشان", w: "خیشان" }, { c: "خواهش", w: "خاهش" },
+            { c: "صاحب", w: "ساهب" }, { c: "مواظب", w: "مواضب" },
+            { c: "ضبط صوت", w: "ظبط صوت" }, { c: "تلويزيون", w: "تلویزون" },
+            { c: "ترقّه", w: "ترغه" }, { c: "شروع", w: "شروء" },
+            { c: "بحث", w: "بحس" }, { c: "تعجب", w: "تعجوب" },
+            { c: "عضو", w: "ازو" }, { c: "آلودگی صوتی", w: "آلودگی سوتی" },
+            { c: "غرق شادی", w: "قرق شادی" }, { c: "پونه های وحشی", w: "پونه های وهشی" },
+            { c: "لذت بخش", w: "لزت بخش" }, { c: "پاکیزگی", w: "پاکیزقی" },
+            { c: "محیطی", w: "مهیطی" }, { c: "گزارش", w: "گذارش" },
+            { c: "محلّ مخصوص", w: "محلّ مخسوس" }, { c: "تعطیلی", w: "تطیلی" },
+            { c: "طول", w: "تول" }, { c: "برگزار", w: "برگذار" },
+            { c: "سالن اصلی", w: "سالن اسلی" }, { c: "ماهرانه", w: "ماحرانه" },
+            { c: "موضوع", w: "موزوع" }
+        ];
+
+        let studentName = "", selectedWords = [], currentQuestion = 0, score = 0, isAudioPlaying = false;
+        const music = document.getElementById("bg-music");
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSuccessSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function createFlowers() {
+            const container = document.getElementById('flowers-container');
+            const flowers = ['🌸', '🌺', '🌼', '🌷', '✨'];
+            for(let i=0; i<30; i++) {
+                let f = document.createElement('div');
+                f.className = 'flower';
+                f.innerText = flowers[Math.floor(Math.random() * flowers.length)];
+                f.style.left = Math.random() * 100 + 'vw';
+                f.style.animationDuration = (Math.random() * 5 + 7) + 's';
+                f.style.animationDelay = (Math.random() * 5) + 's';
+                container.appendChild(f);
+            }
+        }
+        createFlowers();
+
+        function toggleAudio() {
+            if (isAudioPlaying) {
+                music.pause();
+                document.getElementById("audio-toggle").innerText = "🔇";
+            } else {
+                music.play().catch(() => alert("مرورگر اجازه پخش نداد."));
+                document.getElementById("audio-toggle").innerText = "🎵";
+            }
+            isAudioPlaying = !isAudioPlaying;
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function goToStory() {
+            studentName = document.getElementById("student-name").value.trim() || "دوست من";
+            if(!isAudioPlaying) toggleAudio();
+            showScreen("screen-story");
+        }
+
+        function startGame() {
+            selectedWords = [...wordBank].sort(() => 0.5 - Math.random()).slice(0, 10);
+            currentQuestion = 0; score = 0;
+            loadQuestion();
+            showScreen("screen-game");
+        }
+
+        let currentCorrectIndex = 1;
+        function loadQuestion() {
+            document.getElementById("current-q").innerText = (currentQuestion + 1);
+            let wordObj = selectedWords[currentQuestion];
+            currentCorrectIndex = Math.random() > 0.5 ? 1 : 2;
+            let wrongIndex = currentCorrectIndex === 1 ? 2 : 1;
+
+            let btn1 = document.getElementById("btn-1");
+            let btn2 = document.getElementById("btn-2");
+            
+            btn1.innerText = currentCorrectIndex === 1 ? wordObj.c : wordObj.w;
+            btn2.innerText = currentCorrectIndex === 2 ? wordObj.c : wordObj.w;
+            
+            // پاک کردن کامل استایل‌ها برای جلوگیری از گیر کردن رنگ
+            btn1.blur();
+            btn2.blur();
+            btn1.style.background = "";
+            btn2.style.background = "";
+        }
+
+        const praises = ["آفرین! 🌟", "عالی بود! 👏", "بی‌نظیره! ✨", "تو فوق‌العاده‌ای! 🏆"];
+
+        function checkAnswer(btnNum) {
+            let isCorrect = (btnNum === currentCorrectIndex);
+            
+            if (isCorrect) {
+                score++;
+                playSuccessSound();
+                let msg = document.getElementById("feedback-msg");
+                msg.innerText = praises[Math.floor(Math.random() * praises.length)];
+                msg.style.display = "block";
+                msg.style.background = "#32cd32";
+                
+                setTimeout(() => {
+                    msg.style.display = "none";
+                    nextQ();
+                }, 1000);
+            } else {
+                let msg = document.getElementById("feedback-msg");
+                msg.innerText = "دقت کن! ❌";
+                msg.style.display = "block";
+                msg.style.background = "#ff4500";
+                
+                setTimeout(() => {
+                    msg.style.display = "none";
+                    nextQ();
+                }, 1000);
+            }
+        }
+
+        function nextQ() {
+            currentQuestion++;
+            if (currentQuestion < 10) loadQuestion();
+            else showFinal();
+        }
+
+        function showFinal() {
+            let w1 = selectedWords[0].c, w2 = selectedWords[1].c, w3 = selectedWords[2].c;
+            document.getElementById("final-letter").innerHTML = `<b>دوست عزیزم "${studentName}"،</b><br>از تو سپاسگزارم. با کمک تو املای کلماتی مثل <b>${w1}</b>، <b>${w2}</b> و <b>${w3}</b> را یاد گرفتم.<br>امیدوارم همیشه موفق باشی!<br><i>دوستت امید</i>`;
+            document.getElementById("score-text").innerText = score;
+            showScreen("screen-result");
+        }
+
+        function resetGame() { showScreen("screen-intro"); }
+    </script>
+</body>
+</html>
+
+ /body>
+</html>

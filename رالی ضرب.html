@@ -1,0 +1,1733 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/>```html
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بازی رالی ضرب ریاضی | طراح آموزش: الهام باقری</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap');
+
+        :root {
+            --primary-glow: #00f2fe;
+            --secondary-glow: #4facfe;
+            --danger-glow: #ff0844;
+            --success-glow: #00ff87;
+            --dark-bg: #090c10;
+            --gold-glow: #ffd700;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #ffffff;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* ظرف اصلی بازی - کاملاً واکنش‌گرا */
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            max-height: 850px;
+            aspect-ratio: 480 / 850;
+            background: #11141a;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 
+                        0 0 40px rgba(79, 172, 254, 0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+        }
+
+        /* پوسته‌های رویین منوها */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.4s ease-in-out;
+            backdrop-filter: blur(10px);
+            background: rgba(9, 12, 16, 0.9);
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+
+        .logo-container {
+            margin-bottom: 20px;
+            animation: bounce 3s ease-in-out infinite;
+        }
+
+        .game-title {
+            font-size: 2.1rem;
+            font-weight: 900;
+            background: linear-gradient(to left, #00f2fe, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
+            margin-bottom: 5px;
+        }
+
+        .game-subtitle {
+            font-size: 0.95rem;
+            color: #a0aec0;
+        }
+
+        .designer-tag {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--gold-glow);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.25);
+            margin-top: 10px;
+            padding: 6px 18px;
+            border-radius: 50px;
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px dashed rgba(255, 215, 0, 0.3);
+        }
+
+        /* فیلد دریافت نام بازیکن */
+        .input-group {
+            margin: 20px 0 10px 0;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-group label {
+            font-size: 0.9rem;
+            color: #cbd5e0;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            text-align: center;
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-glow);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* دکمه‌های با استایل نئون */
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #11141a;
+            border: none;
+            padding: 14px 40px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.35);
+            transition: all 0.2s ease;
+            margin-top: 10px;
+            outline: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 242, 254, 0.5);
+        }
+
+        .guide-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 15px;
+            padding: 12px;
+            margin: 15px 0;
+            width: 90%;
+            font-size: 0.82rem;
+            color: #cbd5e0;
+            line-height: 1.6;
+        }
+
+        .guide-title {
+            color: var(--primary-glow);
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        /* پاپ‌آپ آزمون ضرب (Modal) */
+        #quiz-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 8, 12, 0.94);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        #quiz-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .quiz-card {
+            width: 85%;
+            background: linear-gradient(135deg, #121824 0%, #080d16 100%);
+            border-radius: 24px;
+            border: 2px solid var(--secondary-glow);
+            box-shadow: 0 15px 40px rgba(0, 242, 254, 0.3);
+            padding: 25px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #quiz-overlay.active .quiz-card {
+            transform: scale(1);
+        }
+
+        .timer-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, var(--danger-glow), var(--primary-glow));
+            transform-origin: right;
+            transition: transform 5s linear;
+        }
+
+        .question-text {
+            font-size: 2.6rem;
+            font-weight: 900;
+            color: #ffffff;
+            margin-bottom: 20px;
+            direction: ltr;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .answer-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            padding: 14px;
+            font-size: 1.35rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            outline: none;
+        }
+
+        .answer-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--secondary-glow);
+        }
+
+        /* انیمیشن لرزش کارت برای پاسخ اشتباه */
+        @keyframes modal-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        .quiz-card.shake {
+            animation: modal-shake 0.4s ease;
+            border-color: var(--danger-glow);
+        }
+
+        /* توست پیام برای پاسخ اشتباه */
+        #game-toast {
+            position: absolute;
+            top: 22%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(255, 8, 68, 0.95);
+            color: #ffffff;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(255, 8, 68, 0.4);
+            z-index: 25;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #game-toast.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* بنر تغییر مرحله */
+        #level-alert {
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.95), rgba(79, 172, 254, 0.98));
+            color: #11141a;
+            padding: 16px 36px;
+            border-radius: 15px;
+            font-size: 1.6rem;
+            font-weight: 900;
+            box-shadow: 0 10px 40px rgba(0, 242, 254, 0.4);
+            z-index: 15;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #level-alert.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* کارنامه نهایی */
+        #game-over-screen {
+            background: linear-gradient(135deg, #07090e 0%, #0f1420 100%);
+        }
+
+        .card-container {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 18px;
+            width: 90%;
+            margin-bottom: 20px;
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .card-row:last-child {
+            border-bottom: none;
+        }
+
+        .card-label {
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+
+        .card-value {
+            font-weight: bold;
+            font-size: 1.05rem;
+        }
+
+        .rank-badge {
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--primary-glow);
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+
+        /* دکمه متحرک نویشا */
+        .nevisha-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #ff007f, #ff0844, #e23e57, #ff007f);
+            background-size: 300% 100%;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px 28px;
+            font-size: 1.15rem;
+            font-weight: 900;
+            border-radius: 50px;
+            box-shadow: 0 0 15px rgba(255, 8, 68, 0.4);
+            margin-top: 10px;
+            width: 85%;
+            transition: all 0.3s ease;
+            animation: gradient-flow 3s infinite alternate, pulse-button 1.5s infinite;
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            text-align: center;
+        }
+
+        .nevisha-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 25px rgba(255, 8, 68, 0.7);
+        }
+
+        /* دکمه‌های لمسی موبایل - جابجا شده به درخواست شما (راست در راست فیزیکی و چپ در چپ فیزیکی) */
+        #touch-controls {
+            position: absolute;
+            bottom: 25px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 35px;
+            pointer-events: none;
+            z-index: 5;
+            direction: ltr; /* تضمین استقرار دکمه چپ در چپ فیزیکی و راست در راست */
+        }
+
+        .touch-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            font-size: 1.8rem;
+            cursor: pointer;
+            pointer-events: auto;
+            touch-action: manipulation;
+            transition: all 0.1s ease;
+        }
+
+        .touch-btn:active {
+            background: rgba(0, 242, 254, 0.35);
+            border-color: var(--primary-glow);
+            transform: scale(0.9);
+        }
+
+        /* کنترل دکمه‌های موسیقی و صدا در بالا */
+        #music-toggle {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 36px;
+            height: 36px;
+            background: rgba(15, 22, 36, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 12;
+            color: #cbd5e0;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+        #sound-toggle {
+            position: absolute;
+            top: 15px;
+            left: 60px;
+            width: 36px;
+            height: 36px;
+            background: rgba(15, 22, 36, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 12;
+            color: #cbd5e0;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        #music-toggle:hover, #sound-toggle:hover {
+            background: rgba(0, 242, 254, 0.2);
+            color: white;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes gradient-flow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulse-button {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <!-- پلیر پخش موزیک ریمیکس پیست رالی -->
+        <audio id="bg-music" loop>
+            <source src="https://dl.boxmusics.ir/songs/400/8/jarico%20u%20orginal%20-%20remix.mp3" type="audio/mpeg">
+        </audio>
+
+        <!-- دکمه‌های کنترل مالتی‌مدیا -->
+        <button id="music-toggle" onclick="toggleMusic()" title="قطع/وصل موزیک">🔇</button>
+        <button id="sound-toggle" onclick="toggleMute()" title="قطع/وصل افکت صدا">🔊</button>
+
+        <!-- منوی شروع بازی و فیلد دریافت مشخصات -->
+        <div id="start-screen" class="screen">
+            <div class="logo-container">
+                <h1 class="game-title">رالی ضرب ریاضی</h1>
+                <div class="game-subtitle">آموزش تعاملی در پیست سرعت</div>
+            </div>
+
+            <div class="designer-tag">طراح آموزش: الهام باقری</div>
+
+            <!-- فرم ورود نام بازیکن -->
+            <div class="input-group">
+                <label for="player-name-input">نام و نام خانوادگی خود را وارد کنید:</label>
+                <input type="text" id="player-name-input" placeholder="مثال: علی رضایی" required>
+            </div>
+
+            <div class="guide-box">
+                <div class="guide-title">🏁 راهنمای بازی:</div>
+                ۱. ماشین را با کلیدهای چپ و راست (یا دکمه‌های لمسی پایین صفحه) هدایت کنید.<br>
+                ۲. **برخورد با موانع جاده مستقیم ۱ قلب کم می‌کند.** از موانع دوری کنید!<br>
+                ۳. برای کسب قلب به **قلب‌های متحرک** بزنید. با پاسخ درست به ضرب ریاضی، جان اضافه می‌گیرید. پاسخ اشتباه جانی کم نمی‌کند!
+            </div>
+
+            <button class="btn" onclick="startGame()">شروع هیجان مسابقه</button>
+        </div>
+
+        <!-- بوم شبیه‌ساز جاده -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- نمایش موقت اخطار پاسخ اشتباه -->
+        <div id="game-toast">پاسخ درست نبود! ❌</div>
+
+        <!-- دکمه‌های کنترلی تاچ روی صفحه (چپ در سمت چپ فیزیکی و راست در سمت راست فیزیکی) -->
+        <div id="touch-controls">
+            <div class="touch-btn" id="btn-left" onmousedown="setSteerLeft(true)" onmouseup="setSteerLeft(false)" ontouchstart="setSteerLeft(true)" ontouchend="setSteerLeft(false)">◀</div>
+            <div class="touch-btn" id="btn-right" onmousedown="setSteerRight(true)" onmouseup="setSteerRight(false)" ontouchstart="setSteerRight(true)" ontouchend="setSteerRight(false)">▶</div>
+        </div>
+
+        <!-- پاپ آپ آزمون ضرب ریاضی -->
+        <div id="quiz-overlay">
+            <div class="quiz-card" id="quiz-card">
+                <div class="timer-container">
+                    <div class="timer-bar" id="quiz-timer"></div>
+                </div>
+                <div class="quiz-header">پاسخ مناسب را انتخاب کنید:</div>
+                <div class="question-text" id="question-text">40 × 30</div>
+                <div class="answers-grid">
+                    <button class="answer-btn" onclick="checkAnswer(0)">1200</button>
+                    <button class="answer-btn" onclick="checkAnswer(1)">1500</button>
+                    <button class="answer-btn" onclick="checkAnswer(2)">900</button>
+                    <button class="answer-btn" onclick="checkAnswer(3)">1600</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- بنر لول آپ -->
+        <div id="level-alert">وارد مرحله ۲ شدید! 🔥</div>
+
+        <!-- کارنامه نهایی و پایان بازی -->
+        <div id="game-over-screen" class="screen hidden">
+            <div class="logo-container">
+                <h1 class="game-title" style="font-size: 2.3rem;" id="game-over-title">پایان مسابقه!</h1>
+                <div class="game-subtitle" id="game-over-subtitle">کارنامه نهایی رالی ریاضی</div>
+            </div>
+
+            <div class="card-container">
+                <!-- نمایش مشخصات بازیکن در کارنامه -->
+                <div class="card-row">
+                    <span class="card-label">نام و نام خانوادگی راننده:</span>
+                    <span class="card-value" id="res-player-name" style="color: var(--gold-glow);">نامشخص</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">امتیاز نهایی مسابقه:</span>
+                    <span class="card-value" id="res-score" style="color: var(--primary-glow);">0</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">پاسخ‌های صحیح به قلب‌ها:</span>
+                    <span class="card-value" id="res-correct" style="color: var(--success-glow);">0</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">پاسخ‌های اشتباه یا بدون پاسخ:</span>
+                    <span class="card-value" id="res-wrong" style="color: var(--danger-glow);">0</span>
+                </div>
+                <div class="card-row" style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 5px; padding-top: 12px;">
+                    <span class="card-label">رتبه رانندگی نهایی شما:</span>
+                    <span class="rank-badge" id="res-rank">راننده معمولی</span>
+                </div>
+            </div>
+
+            <button class="btn" onclick="resetGame()" style="margin-top: 0; width: 85%;">شروع مجدد رقابت 🔄</button>
+            
+            <a href="https://eitaa.com/Nevisha_" target="_blank" class="nevisha-btn">
+                بازی‌های بیشتر در نویشا 🌟
+            </a>
+
+            <div class="designer-tag" style="margin-top: 25px;">طراح آموزش: الهام باقری</div>
+        </div>
+    </div>
+
+    <script>
+        // --- افکت‌های صوتی با وب صوتی (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundMuted = false;
+
+        function playSound(type) {
+            if (soundMuted) return;
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime); 
+                    osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.1); 
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.2); 
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.3); 
+                    gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.55);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.6);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(293.66, audioCtx.currentTime); 
+                    osc.frequency.linearRampToValueAtTime(146.83, audioCtx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.45);
+                } else if (type === 'collision') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.55);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.55);
+                } else if (type === 'levelUp') {
+                    const notes = [261.63, 329.63, 392.00, 523.25];
+                    notes.forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.type = 'sine';
+                        o.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
+                        g.gain.setValueAtTime(0.12, audioCtx.currentTime + idx * 0.08);
+                        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.08 + 0.2);
+                        o.start(audioCtx.currentTime + idx * 0.08);
+                        o.stop(audioCtx.currentTime + idx * 0.08 + 0.25);
+                    });
+                } else if (type === 'heart') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); 
+                    osc.frequency.exponentialRampToValueAtTime(1174.66, audioCtx.currentTime + 0.25); 
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                }
+            } catch (e) {
+                console.log('پخش زنده فایل‌های صوتی سیستم معلق گردید.');
+            }
+        }
+
+        function toggleMute() {
+            soundMuted = !soundMuted;
+            document.getElementById('sound-toggle').innerText = soundMuted ? '🔇' : '🔊';
+        }
+
+        // --- مدیریت پخش موزیک پس‌زمینه با URL درخواستی شما ---
+        let musicPlaying = false;
+        function toggleMusic() {
+            const music = document.getElementById('bg-music');
+            const btn = document.getElementById('music-toggle');
+            if (music.paused) {
+                music.play().then(() => {
+                    musicPlaying = true;
+                    btn.innerHTML = '🎵';
+                    btn.style.color = 'var(--primary-glow)';
+                    btn.style.boxShadow = '0 0 12px var(--primary-glow)';
+                    btn.style.borderColor = 'var(--primary-glow)';
+                }).catch(e => {
+                    showToast("برای پخش موزیک، ابتدا روی صفحه بازی کلیک کنید");
+                });
+            } else {
+                music.pause();
+                musicPlaying = false;
+                btn.innerHTML = '🔇';
+                btn.style.color = '#cbd5e0';
+                btn.style.boxShadow = 'none';
+                btn.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            }
+        }
+
+        // --- متغیرها و ماژول فیزیک جاده و رندرسازی ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = 480;
+            canvas.height = 800;
+        }
+        resizeCanvas();
+
+        let gameStatus = 'START';
+        let playerName = "بازیکن"; // نام و مشخصات بازیکن
+        let score = 0;
+        let hearts = 3;
+        const maxHearts = 5;
+        let currentLevel = 1;
+        let speed = 0;
+        let distanceTraveled = 0;
+        let correctAnswersCount = 0;
+        let wrongAnswersCount = 0;
+
+        let invincibleFrames = 0;
+
+        let nitroActive = false;
+        let nitroDuration = 0;
+
+        const player = {
+            laneOffset: 0, // تراز افقی خودرو نسبت به خط وسط جاده (-110 تا 110)
+            targetLaneOffset: 0,
+            y: 640,
+            width: 48,
+            height: 85,
+            speedX: 7.5,
+            exhaustSmokeTime: 0
+        };
+
+        const keys = { left: false, right: false };
+        function setSteerLeft(val) { keys.left = val; }
+        function setSteerRight(val) { keys.right = val; }
+
+        // پیچ و خم هوشمند جاده
+        let targetRoadCurve = 0;
+        let currentRoadCurve = 0;
+        let frameCount = 0;
+
+        function getRoadCenterX(y) {
+            let progress = (800 - y) / 800;
+            return 240 + currentRoadCurve * Math.pow(progress, 1.8);
+        }
+
+        const levelSettings = {
+            1: { maxSpeed: 6.5, obstacleSpawnInterval: 95, label: 'مرحله ۱ (آسان)' },
+            2: { maxSpeed: 10, obstacleSpawnInterval: 75, label: 'مرحله ۲ (متوسط)' },
+            3: { maxSpeed: 14, obstacleSpawnInterval: 60, label: 'مرحله ۳ (سخت و حرفه‌ای)' }
+        };
+
+        let obstacles = [];
+        let scenery = [];
+        let particles = [];
+        let heartsOnRoad = [];
+        let roadOffset = 0;
+
+        // دکوراسیون کنار پیست (درخت و سنگ)
+        class SceneryItem {
+            constructor(side) {
+                this.side = side;
+                this.width = Math.random() * 20 + 20;
+                this.height = this.width;
+                this.laneOffset = side === 'left' ? -180 - Math.random() * 100 : 180 + Math.random() * 100;
+                this.y = -80;
+                this.type = Math.random() > 0.4 ? 'tree' : 'rock';
+            }
+
+            update(roadSpeed) {
+                this.y += roadSpeed;
+            }
+
+            draw() {
+                let renderX = getRoadCenterX(this.y) + this.laneOffset;
+                ctx.save();
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetY = 3;
+
+                if (this.type === 'tree') {
+                    ctx.fillStyle = '#3e2723';
+                    ctx.fillRect(renderX - 3, this.y + this.height - 8, 6, 8);
+                    ctx.beginPath();
+                    ctx.arc(renderX, this.y + this.height / 2 - 2, this.width / 2, 0, Math.PI * 2);
+                    ctx.fillStyle = '#1b5e20';
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(renderX - 3, this.y + this.height / 2 - 4, this.width / 3, 0, Math.PI * 2);
+                    ctx.fillStyle = '#2e7d32';
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = '#90a4ae';
+                    ctx.beginPath();
+                    ctx.moveTo(renderX, this.y);
+                    ctx.lineTo(renderX + this.width/2, this.y + this.height/2);
+                    ctx.lineTo(renderX + this.width, this.y + this.height);
+                    ctx.lineTo(renderX - this.width/2, this.y + this.height);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        // موانع ترافیکی جاده (کاهش مستقیم جان بدون باز شدن سوال)
+        class Obstacle {
+            constructor() {
+                this.width = 44;
+                this.height = 70;
+                this.laneOffset = -100 + Math.random() * 200; 
+                this.y = -100;
+
+                const types = ['barrel', 'rock', 'broken_car'];
+                this.type = types[Math.floor(Math.random() * types.length)];
+                this.verticalSpeed = this.type === 'broken_car' ? Math.random() * 1.5 + 0.5 : 0;
+                this.horizontalSpeed = (currentLevel >= 2 && Math.random() > 0.6) ? (Math.random() > 0.5 ? 1 : -1) : 0;
+            }
+
+            update(roadSpeed) {
+                this.y += (roadSpeed - this.verticalSpeed);
+                this.laneOffset += this.horizontalSpeed;
+
+                if (this.laneOffset < -110) { this.laneOffset = -110; this.horizontalSpeed *= -1; }
+                if (this.laneOffset > 110) { this.laneOffset = 110; this.horizontalSpeed *= -1; }
+            }
+
+            draw() {
+                let renderX = getRoadCenterX(this.y) + this.laneOffset - this.width/2;
+                ctx.save();
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                ctx.shadowBlur = 6;
+                ctx.shadowOffsetY = 4;
+
+                if (this.type === 'barrel') {
+                    const grad = ctx.createLinearGradient(renderX, this.y, renderX + this.width, this.y);
+                    grad.addColorStop(0, '#d84315');
+                    grad.addColorStop(0.3, '#ff8a65');
+                    grad.addColorStop(0.7, '#d84315');
+                    grad.addColorStop(1, '#3e2723');
+
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(renderX, this.y + 4, this.width, this.height - 8);
+                    ctx.fillStyle = '#ffcc80';
+                    ctx.beginPath();
+                    ctx.ellipse(renderX + this.width/2, this.y + 4, this.width/2, 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#4e342e';
+                    ctx.beginPath();
+                    ctx.ellipse(renderX + this.width/2, this.y + this.height - 4, this.width/2, 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#111';
+                    ctx.fillRect(renderX, this.y + 20, this.width, 6);
+                    ctx.fillRect(renderX, this.y + 40, this.width, 6);
+                } 
+                else if (this.type === 'rock') {
+                    const rockGrad = ctx.createRadialGradient(
+                        renderX + 12, this.y + 15, 3, 
+                        renderX + this.width/2, this.y + this.height/2, this.width/2
+                    );
+                    rockGrad.addColorStop(0, '#cfd8dc');
+                    rockGrad.addColorStop(0.8, '#546e7a');
+                    rockGrad.addColorStop(1, '#263238');
+                    ctx.fillStyle = rockGrad;
+
+                    ctx.beginPath();
+                    ctx.moveTo(renderX + 8, this.y);
+                    ctx.lineTo(renderX + this.width - 4, this.y + 8);
+                    ctx.lineTo(renderX + this.width, this.y + this.height - 10);
+                    ctx.lineTo(renderX + 12, this.y + this.height);
+                    ctx.lineTo(renderX, this.y + this.height/2);
+                    ctx.closePath();
+                    ctx.fill();
+                } 
+                else if (this.type === 'broken_car') {
+                    ctx.fillStyle = '#1565c0';
+                    ctx.fillRect(renderX, this.y + 8, this.width, this.height - 16);
+                    ctx.fillStyle = '#212121';
+                    ctx.fillRect(renderX - 3, this.y + 12, 3, 14);
+                    ctx.fillRect(renderX + this.width, this.y + 12, 3, 14);
+                    ctx.fillRect(renderX - 3, this.y + this.height - 26, 3, 14);
+                    ctx.fillRect(renderX + this.width, this.y + this.height - 26, 3, 14);
+
+                    ctx.fillStyle = '#455a64';
+                    ctx.fillRect(renderX + 5, this.y + 16, this.width - 10, 8);
+                    ctx.fillRect(renderX + 5, this.y + this.height - 28, this.width - 10, 12);
+
+                    if (Math.floor(Date.now() / 200) % 2 === 0) {
+                        ctx.fillStyle = '#ff1744';
+                        ctx.beginPath();
+                        ctx.arc(renderX + 6, this.y + 8, 3, 0, Math.PI * 2);
+                        ctx.arc(renderX + this.width - 6, this.y + 8, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                ctx.restore();
+            }
+        }
+
+        // قلب‌های جاده فعال‌کننده چالش ریاضی
+        class HeartItem {
+            constructor() {
+                this.width = 34;
+                this.height = 34;
+                this.laneOffset = -90 + Math.random() * 180;
+                this.y = -80;
+                this.pulse = 0;
+            }
+
+            update(roadSpeed) {
+                this.y += roadSpeed;
+                this.pulse += 0.1;
+            }
+
+            draw() {
+                let renderX = getRoadCenterX(this.y) + this.laneOffset - this.width/2;
+                ctx.save();
+                
+                let scale = 1 + Math.sin(this.pulse) * 0.12;
+                ctx.translate(renderX + this.width/2, this.y + this.height/2);
+                ctx.scale(scale, scale);
+
+                ctx.shadowColor = '#ff0844';
+                ctx.shadowBlur = 10;
+
+                ctx.fillStyle = '#ff0844';
+                ctx.beginPath();
+                ctx.moveTo(0, 10);
+                ctx.bezierCurveTo(-15, -5, -25, 10, 0, 24);
+                ctx.bezierCurveTo(25, 10, 15, -5, 0, 10);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#ff80ab';
+                ctx.beginPath();
+                ctx.moveTo(0, 12);
+                ctx.bezierCurveTo(-8, 3, -12, 10, 0, 18);
+                ctx.bezierCurveTo(12, 10, 8, 3, 0, 12);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        // کلاس ذرات معلق (سیستم پارتیکلی)
+        class Particle {
+            constructor(x, y, color, size, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = size;
+                this.vx = vx;
+                this.vy = vy;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.02 + 0.015;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= this.decay;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function spawnExplosion(x, y, isHeartColor = false) {
+            let colors = isHeartColor ? ['#ff80ab', '#ff0844', '#f50057', '#ffffff'] : ['#ff3300', '#ffaa00', '#555555', '#ffea00'];
+            for (let i = 0; i < 20; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 4 + 1.5;
+                const size = Math.random() * 6 + 2.5;
+                particles.push(new Particle(
+                    x, y, colors[Math.floor(Math.random() * colors.length)], size,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed
+                ));
+            }
+        }
+
+        function spawnNitroSparks() {
+            let carX = getRoadCenterX(player.y) + player.laneOffset;
+            for (let i = 0; i < 2; i++) {
+                particles.push(new Particle(
+                    carX - 10 + Math.random() * 20,
+                    player.y + player.height,
+                    '#00f2fe',
+                    Math.random() * 3 + 1.5,
+                    Math.random() * 2 - 1,
+                    Math.random() * 3 + 4
+                ));
+            }
+        }
+
+        // --- مدیریت ریاضی و سوالات ضرب تفکیک‌شده ---
+        let currentQuestion = null;
+        let lastCollidedHeartPos = { x: 0, y: 0 };
+        let quizTimerInterval = null;
+
+        function showToast(message) {
+            const toast = document.getElementById('game-toast');
+            toast.innerText = message;
+            toast.classList.add('active');
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 1800);
+        }
+
+        // تولید کاملاً منحصربفرد سوالات ضرب بدون تکرار متناسب با مرحله
+        function generateMathQuestion(lvl) {
+            let num1, num2;
+            if (lvl === 1) {
+                // مرحله اول: جدول ضرب ۱ تا ۵
+                num1 = Math.floor(Math.random() * 4) + 2; 
+                num2 = Math.floor(Math.random() * 8) + 2; 
+            } else if (lvl === 2) {
+                // مرحله دوم: جدول ضرب ۵ تا ۹
+                num1 = Math.floor(Math.random() * 5) + 5; 
+                num2 = Math.floor(Math.random() * 5) + 5; 
+            } else {
+                // مرحله ۳: ضرب دو رقم در دو رقم که حتماً یکان هر دو عدد صفر است (مانند ۴۰ × ۶۰)
+                num1 = (Math.floor(Math.random() * 8) + 2) * 10; // ۲۰، ۳۰، ۴۰، ۵۰، ۶۰، ۷۰، ۸۰، ۹۰
+                num2 = (Math.floor(Math.random() * 8) + 2) * 10; // ۲۰، ۳۰، ۴۰، ۵۰، ۶۰، ۷۰، ۸۰، ۹۰
+                
+                while (num1 === num2 && Math.random() > 0.2) {
+                    num2 = (Math.floor(Math.random() * 8) + 2) * 10;
+                }
+            }
+
+            const correctAnswer = num1 * num2;
+            const options = new Set([correctAnswer]);
+
+            // تولید ۳ گزینه انحرافی منطقی و زیبا
+            while (options.size < 4) {
+                let divisor = (lvl === 3) ? 100 : 2; // در مرحله ۳ پاسخ‌ها مضرب ۱۰۰ هستند
+                let offSet = (Math.floor(Math.random() * 4) + 1) * divisor * (Math.random() > 0.5 ? 1 : -1);
+                let distracter = correctAnswer + offSet;
+                if (distracter > 0 && distracter !== correctAnswer) {
+                    options.add(distracter);
+                }
+            }
+
+            return {
+                text: `${num1} × ${num2}`,
+                correct: correctAnswer,
+                answers: Array.from(options).sort(() => Math.random() - 0.5)
+            };
+        }
+
+        // گشودن پاپ آپ تک سوالی آزمون ضرب
+        function triggerMathChallenge(hx, hy) {
+            gameStatus = 'MATH_MODE';
+            lastCollidedHeartPos = { x: hx, y: hy };
+            currentQuestion = generateMathQuestion(currentLevel);
+
+            document.getElementById('question-text').innerText = currentQuestion.text;
+            const buttons = document.querySelectorAll('.answer-btn');
+            
+            currentQuestion.answers.forEach((val, idx) => {
+                buttons[idx].innerText = val;
+                buttons[idx].style.background = 'rgba(255, 255, 255, 0.04)';
+                buttons[idx].style.borderColor = 'rgba(255, 255, 255, 0.08)';
+            });
+
+            const timerBar = document.getElementById('quiz-timer');
+            timerBar.style.transition = 'none';
+            timerBar.style.transform = 'scaleX(1)';
+            
+            timerBar.offsetHeight; 
+            timerBar.style.transition = 'transform 5s linear';
+            timerBar.style.transform = 'scaleX(0)';
+
+            document.getElementById('quiz-overlay').classList.add('active');
+
+            quizTimerInterval = setTimeout(() => {
+                timeOutChallenge();
+            }, 5000);
+        }
+
+        function checkAnswer(selectedIndex) {
+            clearTimeout(quizTimerInterval);
+            const buttons = document.querySelectorAll('.answer-btn');
+            const chosenAnswer = currentQuestion.answers[selectedIndex];
+
+            if (chosenAnswer === currentQuestion.correct) {
+                correctAnswersCount++;
+                if (hearts < maxHearts) {
+                    hearts++;
+                }
+                score += (25 * currentLevel);
+                playSound('correct');
+                
+                nitroActive = true;
+                nitroDuration = 100;
+
+                buttons[selectedIndex].style.background = 'rgba(0, 255, 135, 0.2)';
+                buttons[selectedIndex].style.borderColor = 'var(--success-glow)';
+                
+                spawnExplosion(lastCollidedHeartPos.x, lastCollidedHeartPos.y, true);
+
+                setTimeout(() => {
+                    closeQuiz();
+                    gameStatus = 'PLAYING';
+                }, 400);
+
+            } else {
+                applyWrongAnswerImpact(selectedIndex);
+            }
+        }
+
+        function applyWrongAnswerImpact(selectedIndex) {
+            wrongAnswersCount++;
+            playSound('wrong');
+
+            const card = document.getElementById('quiz-card');
+            const buttons = document.querySelectorAll('.answer-btn');
+
+            if (selectedIndex !== null) {
+                buttons[selectedIndex].style.background = 'rgba(255, 8, 68, 0.2)';
+                buttons[selectedIndex].style.borderColor = 'var(--danger-glow)';
+            }
+            
+            buttons.forEach((btn, idx) => {
+                if (currentQuestion.answers[idx] === currentQuestion.correct) {
+                    btn.style.background = 'rgba(0, 255, 135, 0.15)';
+                    btn.style.borderColor = 'var(--success-glow)';
+                }
+            });
+
+            card.classList.add('shake');
+
+            setTimeout(() => {
+                card.classList.remove('shake');
+                closeQuiz();
+                showToast("پاسخ درست نبود! ❌");
+                gameStatus = 'PLAYING';
+            }, 800);
+        }
+
+        function timeOutChallenge() {
+            applyWrongAnswerImpact(null);
+        }
+
+        function closeQuiz() {
+            document.getElementById('quiz-overlay').classList.remove('active');
+        }
+
+        // --- استارت و ریست گیم رالی ضرب ---
+        function startGame() {
+            // بررسی وارد کردن مشخصات بازیکن
+            const nameInput = document.getElementById('player-name-input');
+            const enteredName = nameInput.value.trim();
+            if (!enteredName) {
+                nameInput.style.borderColor = 'var(--danger-glow)';
+                nameInput.focus();
+                showToast("لطفاً نام و نام خانوادگی خود را وارد کنید! ⚠️");
+                return;
+            }
+            playerName = enteredName;
+
+            // پنهان کردن منو
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+
+            // تلاش برای پخش خودکار موزیک پیست به محض شروع
+            const music = document.getElementById('bg-music');
+            const musicBtn = document.getElementById('music-toggle');
+            if (music.paused) {
+                music.play().then(() => {
+                    musicPlaying = true;
+                    musicBtn.innerHTML = '🎵';
+                    musicBtn.style.color = 'var(--primary-glow)';
+                    musicBtn.style.boxShadow = '0 0 12px var(--primary-glow)';
+                    musicBtn.style.borderColor = 'var(--primary-glow)';
+                }).catch(err => {
+                    console.log("پخش خودکار موزیک به تعویق افتاد.");
+                });
+            }
+            
+            score = 0;
+            hearts = 3;
+            currentLevel = 1;
+            distanceTraveled = 0;
+            correctAnswersCount = 0;
+            wrongAnswersCount = 0;
+            speed = 0;
+            invincibleFrames = 0;
+            nitroActive = false;
+            nitroDuration = 0;
+            
+            player.laneOffset = 0;
+            player.targetLaneOffset = 0;
+
+            obstacles = [];
+            scenery = [];
+            particles = [];
+            heartsOnRoad = [];
+            frameCount = 0;
+            currentRoadCurve = 0;
+            targetRoadCurve = 0;
+
+            for(let i=0; i<6; i++) {
+                const itemLeft = new SceneryItem('left');
+                itemLeft.y = Math.random() * 800;
+                scenery.push(itemLeft);
+
+                const itemRight = new SceneryItem('right');
+                itemRight.y = Math.random() * 800;
+                scenery.push(itemRight);
+            }
+
+            gameStatus = 'PLAYING';
+            animate();
+        }
+
+        function resetGame() {
+            startGame();
+        }
+
+        function checkLevelProgression() {
+            let nextLevel = currentLevel;
+            if (score >= 450) {
+                endGame(true);
+                return;
+            } else if (score >= 260) {
+                nextLevel = 3;
+            } else if (score >= 100) {
+                nextLevel = 2;
+            }
+
+            if (nextLevel !== currentLevel) {
+                currentLevel = nextLevel;
+                triggerLevelUpTransition();
+            }
+        }
+
+        function triggerLevelUpTransition() {
+            gameStatus = 'LEVEL_TRANSITION';
+            playSound('levelUp');
+            
+            const alertBox = document.getElementById('level-alert');
+            alertBox.innerText = `وارد مرحله ${currentLevel} شدید! ⚡`;
+            alertBox.classList.add('active');
+
+            let carX = getRoadCenterX(player.y) + player.laneOffset;
+            for (let i = 0; i < 35; i++) {
+                particles.push(new Particle(
+                    carX, player.y,
+                    '#00f2fe',
+                    Math.random() * 8 + 3,
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10
+                ));
+            }
+
+            setTimeout(() => {
+                alertBox.classList.remove('active');
+                gameStatus = 'PLAYING';
+            }, 1800);
+        }
+
+        function endGame(isVictory) {
+            gameStatus = 'END';
+            
+            // ثبت نام بازیکن در کارنامه نهایی
+            document.getElementById('res-player-name').innerText = playerName;
+
+            document.getElementById('res-score').innerText = score;
+            document.getElementById('res-correct').innerText = correctAnswersCount;
+            document.getElementById('res-wrong').innerText = wrongAnswersCount;
+
+            let rank = "راننده تفریحی 🛴";
+            if (score >= 450) {
+                rank = "قهرمان فرمول یک نویشا 🏆";
+            } else if (score >= 300) {
+                rank = "راننده فوق حرفه‌ای رالی 🏎️";
+            } else if (score >= 150) {
+                rank = "راننده با تجربه پیست مسابقه 🚗";
+            } else if (score >= 80) {
+                rank = "راننده آماتور شهری 🚕";
+            }
+
+            document.getElementById('res-rank').innerText = rank;
+
+            const title = document.getElementById('game-over-title');
+            const sub = document.getElementById('game-over-subtitle');
+            if (isVictory) {
+                title.innerText = "قهرمان مسابقات! 🎉";
+                title.style.background = 'linear-gradient(to left, #00ff87, #60efff)';
+                title.style.webkitBackgroundClip = 'text';
+                sub.innerText = "تبریک! تمام لول‌های بازی رالی ضرب را با موفقیت و افتخار به پایان رساندید.";
+            } else {
+                title.innerText = "خودرو خراب شد! 💥";
+                title.style.background = 'linear-gradient(to left, #ff0844, #ffb199)';
+                title.style.webkitBackgroundClip = 'text';
+                sub.innerText = "جان خودرو شما به اتمام رسید. بیشتر تمرین کن تا قهرمان بشی!";
+            }
+
+            document.getElementById('game-over-screen').classList.remove('hidden');
+        }
+
+        // --- چرخه انیمیشن و فیزیک رالی ---
+        function animate() {
+            if (gameStatus === 'END') return;
+
+            requestAnimationFrame(animate);
+
+            if (gameStatus === 'PLAYING' || gameStatus === 'LEVEL_TRANSITION') {
+                updatePhysics();
+            }
+            
+            drawGraphics();
+        }
+
+        function updatePhysics() {
+            frameCount++;
+            const currentSettings = levelSettings[currentLevel];
+            
+            // مدیریت پویای جاده پیچ و خم دار
+            if (frameCount % 180 === 0) {
+                targetRoadCurve = (Math.random() - 0.5) * 160; 
+            }
+            currentRoadCurve += (targetRoadCurve - currentRoadCurve) * 0.015;
+
+            // سرعت سنجی و فعالسازی شتاب و نیترو رالی
+            let targetMaxSpeed = currentSettings.maxSpeed;
+            if (nitroActive) {
+                targetMaxSpeed *= 1.6;
+                nitroDuration--;
+                if (nitroDuration <= 0) nitroActive = false;
+                spawnNitroSparks();
+            }
+
+            if (speed < targetMaxSpeed) speed += 0.12;
+            else if (speed > targetMaxSpeed) speed -= 0.08;
+
+            distanceTraveled += speed * 0.04;
+
+            if (Math.floor(distanceTraveled) % 35 === 0 && speed > 2) {
+                score += 1;
+                checkLevelProgression();
+            }
+
+            roadOffset = (roadOffset + speed) % 80;
+
+            if (invincibleFrames > 0) invincibleFrames--;
+
+            if (keys.left) player.targetLaneOffset -= player.speedX;
+            if (keys.right) player.targetLaneOffset += player.speedX;
+
+            if (player.targetLaneOffset < -115) player.targetLaneOffset = -115;
+            if (player.targetLaneOffset > 115) player.targetLaneOffset = 115;
+
+            player.laneOffset += (player.targetLaneOffset - player.laneOffset) * 0.22;
+
+            player.exhaustSmokeTime++;
+            let playerX = getRoadCenterX(player.y) + player.laneOffset;
+            if (player.exhaustSmokeTime % 5 === 0) {
+                particles.push(new Particle(
+                    playerX - 10, player.y + player.height - 2,
+                    'rgba(140, 140, 140, 0.45)',
+                    Math.random() * 6 + 3,
+                    Math.random() * -1.2,
+                    Math.random() * 2 + 1
+                ));
+            }
+
+            // مدیریت درختان حاشیه پیست
+            if (frameCount % 30 === 0) {
+                scenery.push(new SceneryItem('left'));
+                scenery.push(new SceneryItem('right'));
+            }
+            for (let i = scenery.length - 1; i >= 0; i--) {
+                scenery[i].update(speed);
+                if (scenery[i].y > 850) scenery.splice(i, 1);
+            }
+
+            // ترافیک موانع (بشکه، سنگ، رقیب) - کاهش دهنده مستقیم ۱ قلب
+            if (frameCount % currentSettings.obstacleSpawnInterval === 0) {
+                obstacles.push(new Obstacle());
+            }
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].update(speed);
+
+                if (obstacles[i].y > 850) {
+                    obstacles.splice(i, 1);
+                    continue;
+                }
+
+                let obsX = getRoadCenterX(obstacles[i].y) + obstacles[i].laneOffset;
+                let curPlayerX = getRoadCenterX(player.y) + player.laneOffset;
+
+                const boxOffset = 5;
+                if (
+                    curPlayerX - player.width/2 + boxOffset < obsX + obstacles[i].width/2 - boxOffset &&
+                    curPlayerX + player.width/2 - boxOffset > obsX - obstacles[i].width/2 + boxOffset &&
+                    player.y + boxOffset < obstacles[i].y + obstacles[i].height - boxOffset &&
+                    player.y + player.height - boxOffset > obstacles[i].y + boxOffset
+                ) {
+                    if (invincibleFrames === 0) {
+                        hearts--;
+                        playSound('collision');
+                        spawnExplosion(curPlayerX, player.y + player.height/2);
+                        invincibleFrames = 90; // ضدضربه موقت
+
+                        obstacles.splice(i, 1);
+
+                        if (hearts <= 0) {
+                            endGame(false);
+                        }
+                    }
+                }
+            }
+
+            // مدیریت قلب‌های متحرک جاده (حذف آنی به محض برخورد و باز شدن سوال ضرب)
+            if (frameCount % 240 === 0) {
+                heartsOnRoad.push(new HeartItem());
+            }
+
+            for (let i = heartsOnRoad.length - 1; i >= 0; i--) {
+                let heart = heartsOnRoad[i];
+                heart.update(speed);
+
+                if (heart.y > 850) {
+                    heartsOnRoad.splice(i, 1);
+                    continue;
+                }
+
+                let heartX = getRoadCenterX(heart.y) + heart.laneOffset;
+                let curPlayerX = getRoadCenterX(player.y) + player.laneOffset;
+
+                if (
+                    curPlayerX - player.width/2 < heartX + heart.width/2 &&
+                    curPlayerX + player.width/2 > heartX - heart.width/2 &&
+                    player.y < heart.y + heart.height &&
+                    player.y + player.height > heart.y
+                ) {
+                    playSound('heart');
+                    heartsOnRoad.splice(i, 1);
+                    triggerMathChallenge(heartX, heart.y);
+                    break; 
+                }
+            }
+
+            // به روز رسانی ذرات پارتیکل
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                if (particles[i].alpha <= 0) particles.splice(i, 1);
+            }
+        }
+
+        // رندرسازی لایه‌های گرافیکی بوم
+        function drawGraphics() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // بازی همیشه روز باشد و هرگز تاریک نشود (تراکم روز = 0)
+            let dayNightFactor = 0;
+
+            // الف) چمن حاشیه پیست (سبز با طراوت و روشن)
+            ctx.fillStyle = 'rgb(76, 175, 80)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // ب) رندر آسفالت جاده پیچ‌واپیچ
+            ctx.fillStyle = '#263238';
+            ctx.beginPath();
+            
+            let steps = 20;
+            let stepHeight = canvas.height / steps;
+            
+            ctx.moveTo(getRoadCenterX(0) - 150, 0);
+            for (let i = 1; i <= steps; i++) {
+                let y = i * stepHeight;
+                ctx.lineTo(getRoadCenterX(y) - 150, y);
+            }
+            for (let i = steps; i >= 0; i--) {
+                let y = i * stepHeight;
+                ctx.lineTo(getRoadCenterX(y) + 150, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            // ج) گاردریل‌ها و حاشیه‌های زرد و قرمز مواج جاده
+            for (let y = -80; y < canvas.height + 80; y += 40) {
+                let renderY = y + (roadOffset % 40);
+                let rCenterX = getRoadCenterX(renderY);
+                
+                ctx.fillStyle = (Math.floor((renderY + roadOffset) / 40) % 2 === 0) ? '#ff1744' : '#ffffff';
+                ctx.fillRect(rCenterX - 154, renderY, 5, 20);
+                ctx.fillRect(rCenterX + 149, renderY, 5, 20);
+            }
+
+            // د) خط کشی پیست وسط جاده (زرد روشن پررنگ)
+            ctx.save();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([25, 25]);
+            ctx.lineDashOffset = -roadOffset;
+            ctx.beginPath();
+            for (let y = 0; y < canvas.height; y += 10) {
+                ctx.lineTo(getRoadCenterX(y), y);
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // هـ) رسم دکوراسیون صخره و درخت
+            scenery.forEach(item => item.draw());
+
+            // و) رسم موانع و قلب‌های جاده
+            obstacles.forEach(obs => obs.draw());
+            heartsOnRoad.forEach(heart => heart.draw());
+
+            // ز) رسم ذرات معلق
+            particles.forEach(p => p.draw());
+
+            // ح) کشیدن خودروی راننده بازیکن
+            drawPlayerCar(dayNightFactor);
+
+            // ی) کشیدن داشبورد دیجیتال HUD بالای صفحه
+            drawHUD();
+        }
+
+        // کشیدن دقیق خودروی قرمز
+        function drawPlayerCar(nightFactor) {
+            let curPlayerX = getRoadCenterX(player.y) + player.laneOffset;
+
+            if (invincibleFrames > 0 && Math.floor(invincibleFrames / 5) % 2 === 0) {
+                return;
+            }
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetY = 6;
+
+            const bodyGrad = ctx.createLinearGradient(curPlayerX - player.width/2, player.y, curPlayerX + player.width/2, player.y);
+            bodyGrad.addColorStop(0, '#c62828');
+            bodyGrad.addColorStop(0.3, '#ff5252');
+            bodyGrad.addColorStop(0.7, '#c62828');
+            bodyGrad.addColorStop(1, '#8e0000');
+            ctx.fillStyle = bodyGrad;
+            
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(curPlayerX - player.width/2, player.y, player.width, player.height, 10) : ctx.rect(curPlayerX - player.width/2, player.y, player.width, player.height);
+            ctx.fill();
+
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(curPlayerX - player.width/2 - 4, player.y + 10, 4, 18);
+            ctx.fillRect(curPlayerX + player.width/2, player.y + 10, 4, 18);
+            ctx.fillRect(curPlayerX - player.width/2 - 4, player.y + player.height - 28, 4, 18);
+            ctx.fillRect(curPlayerX + player.width/2, player.y + player.height - 28, 4, 18);
+
+            ctx.fillStyle = '#263238';
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(curPlayerX - player.width/2 + 5, player.y + 24, player.width - 10, 36, 6) : ctx.rect(curPlayerX - player.width/2 + 5, player.y + 24, player.width - 10, 36);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(curPlayerX - 5, player.y + 2, 3, player.height - 4);
+            ctx.fillRect(curPlayerX + 2, player.y + 2, 3, player.height - 4);
+
+            if (nitroActive) {
+                const flameGrad = ctx.createLinearGradient(curPlayerX - 8, player.y + player.height, curPlayerX + 8, player.y + player.height + 30);
+                flameGrad.addColorStop(0, '#00f2fe');
+                flameGrad.addColorStop(0.5, '#4facfe');
+                flameGrad.addColorStop(1, 'rgba(0, 242, 254, 0)');
+                ctx.fillStyle = flameGrad;
+                ctx.beginPath();
+                ctx.moveTo(curPlayerX - 10, player.y + player.height);
+                ctx.lineTo(curPlayerX + 10, player.y + player.height);
+                ctx.lineTo(curPlayerX, player.y + player.height + 30);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        // رسم قلب‌های HUD
+        function drawHeart(x, y, size, color) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.fillStyle = color;
+            ctx.moveTo(x, y + size / 4);
+            ctx.quadraticCurveTo(x, y, x + size / 4, y);
+            ctx.quadraticCurveTo(x + size / 2, y, x + size / 2, y + size / 4);
+            ctx.quadraticCurveTo(x + size / 2, y, x + size * 3/4, y);
+            ctx.quadraticCurveTo(x + size, y, x + size, y + size / 4);
+            ctx.quadraticCurveTo(x + size, y + size / 2, x + size * 3/4, y + size * 3/4);
+            ctx.lineTo(x + size / 2, y + size);
+            ctx.lineTo(x + size / 4, y + size * 3/4);
+            ctx.quadraticCurveTo(x, y + size / 2, x, y + size / 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawHUD() {
+            ctx.fillStyle = 'rgba(9, 12, 16, 0.88)';
+            ctx.fillRect(0, 0, canvas.width, 70);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, 70);
+            ctx.lineTo(canvas.width, 70);
+            ctx.stroke();
+
+            // ۱. مرحله فعلی در سمت چپ هدر
+            ctx.fillStyle = '#a0aec0';
+            ctx.font = '10px Vazirmatn, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText("مرحله:", 455, 25);
+            ctx.fillStyle = '#00f2fe';
+            ctx.font = 'bold 13px Vazirmatn, sans-serif';
+            ctx.fillText(levelSettings[currentLevel].label, 455, 48);
+
+            // ۲. نام و مشخصات راننده به همراه قلب‌ها در مرکز هدر
+            ctx.save();
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 11px Vazirmatn, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("راننده: " + playerName, 240, 23);
+
+            // ترسیم ۵ قلب سلامت در مرکز HUD
+            for (let i = 0; i < maxHearts; i++) {
+                let x = 195 + i * 20;
+                let y = 35;
+                if (i < hearts) {
+                    drawHeart(x, y, 14, '#ff0844');
+                } else {
+                    drawHeart(x, y, 14, 'rgba(255, 255, 255, 0.12)');
+                }
+            }
+            ctx.restore();
+
+            // ۳. امتیاز کل در سمت راست هدر
+            ctx.fillStyle = '#a0aec0';
+            ctx.font = '10px Vazirmatn, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText("امتیاز کل:", 25, 25);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 20px Vazirmatn, sans-serif';
+            ctx.fillText(score, 25, 52);
+
+            // سرعت‌سنج دیجیتال در پایین چپ صفحه
+            ctx.save();
+            ctx.fillStyle = 'rgba(9, 12, 16, 0.75)';
+            ctx.fillRect(15, 735, 120, 42);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(15, 735, 120, 42);
+
+            ctx.fillStyle = '#cbd5e0';
+            ctx.font = '9px Vazirmatn, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText("سرعت‌سنج دیجیتال", 25, 751);
+
+            const displaySpeed = Math.floor(speed * 18);
+            ctx.fillStyle = nitroActive ? '#00f2fe' : '#ffd54f';
+            ctx.font = 'bold 15px Vazirmatn, sans-serif';
+            ctx.fillText(`${displaySpeed} KM/H`, 25, 770);
+            ctx.restore();
+        }
+
+        // کیبورد جهت‌نما
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = true;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = false;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = false;
+            }
+        });
+
+        // تاچ و لمس موبایل
+        let touchStartX = 0;
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (gameStatus !== 'PLAYING') return;
+            const touchX = e.touches[0].clientX;
+            const diffX = touchX - touchStartX;
+            
+            player.targetLaneOffset += diffX * 0.75;
+            touchStartX = touchX;
+        }, { passive: true });
+    </script>
+</body>
+</html>
+
+```

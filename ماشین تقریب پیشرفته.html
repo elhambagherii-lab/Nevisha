@@ -1,0 +1,485 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ماشین تقریب</title>
+
+<style>
+
+body{
+font-family:tahoma;
+margin:0;
+text-align:center;
+background:linear-gradient(#7ed0ff,#e6faff);
+overflow:hidden;
+}
+
+/* رنگین کمان */
+#rainbow{
+position:absolute;
+top:10px; /* تنظیم فاصله از بالا */
+left:10px; /* تنظیم فاصله از چپ */
+font-size:85px; /* کمی بزرگتر */
+z-index:0; /* پشت همه عناصر */
+}
+
+/* خورشید */
+#sun{
+position:absolute;
+top:20px; /* تنظیم فاصله از بالا */
+right:20px; /* تنظیم فاصله از راست */
+font-size:60px;
+z-index:0;
+}
+
+/* ابر */
+.cloud{
+position:absolute;
+font-size:40px;
+animation:cloudMove 70s linear infinite;
+z-index:0;
+}
+.cloud2{
+top:90px;
+animation-duration:90s;
+}
+@keyframes cloudMove{
+0%{left:-200px}
+100%{left:120%}
+}
+
+/* پرواز کبوتر */
+#birds{
+font-size:28px;
+position:absolute;
+top:140px;
+animation:fly 15s linear infinite;
+z-index:0;
+}
+@keyframes fly{
+0%{left:-150px}
+100%{left:120%}
+}
+
+/* زمین */
+#ground{
+position:absolute;
+bottom:0;
+width:100%;
+height:120px;
+background:#6ed36e;
+z-index:1;
+}
+
+/* درخت */
+.tree{
+position:absolute;
+bottom:80px;
+font-size:40px;
+z-index:1;
+}
+
+/* محوطه بازی */
+#container{
+max-width:420px;
+margin:auto;
+padding:15px;
+position:relative;
+z-index:2; /* بالای زمین */
+}
+
+/* کوه */
+#mountain{
+width:100%;
+height:220px;
+background:linear-gradient(#8bdc65,#2f7d32);
+clip-path:polygon(0% 100%,50% 10%,100% 100%);
+position:relative;
+}
+
+/* پرچم */
+#flag{
+position:absolute;
+top:5px;
+left:50%;
+transform:translateX(-50%);
+font-size:30px;
+z-index:3; /* بالای کوه */
+}
+
+/* ماشین */
+#car{
+position:absolute;
+bottom:0;
+left:45%;
+font-size:45px;
+transition:1s;
+z-index:3; /* بالای همه */
+}
+
+/* دکمه */
+button{
+width:45%;
+font-size:18px;
+padding:12px;
+border-radius:12px;
+border:none;
+background:#ffd966;
+cursor:pointer;
+margin: 5px 0; /* فاصله بین دکمه ها */
+}
+
+.big{
+width:80%;
+margin:10px auto;
+display:block;
+background:#ffb347;
+}
+
+/* انتخاب سطح */
+#level-selection h3 {
+margin-bottom: 10px;
+font-size: 16px;
+color: #333;
+}
+#level-selection button {
+width: 48%; /* کمی کوچکتر برای جا شدن دو دکمه در کنار هم */
+display: inline-block;
+margin: 5px 1%; /* فاصله بین دکمه ها */
+background: #90ee90; /* رنگ سبز روشن */
+}
+
+
+/* گزینه ها */
+.options{
+display:flex;
+justify-content:space-between;
+margin-top:20px;
+}
+
+/* امتیاز بزرگ */
+#score{
+font-size:30px;
+margin-top:10px;
+color:#d60000;
+font-weight:bold;
+z-index:2; /* بالای کوه */
+position: relative; /* برای اینکه روی کوه قرار بگیرد */
+}
+
+/* ستاره (فقط برای نمایش فعلی) */
+.star{
+position:absolute;
+font-size:30px;
+animation:pop 1s forwards;
+z-index: 10;
+}
+@keyframes pop{
+0%{transform:scale(0)}
+100%{transform:scale(2);opacity:0}
+}
+
+/* طراح */
+#designer{
+position:fixed;
+bottom:5px;
+left:0;
+right:0;
+font-size:12px;
+z-index:10;
+color:#555;
+}
+
+/* بخش های بازی */
+#start, #end {
+padding: 15px;
+border-radius: 10px;
+background-color: rgba(255, 255, 255, 0.7);
+margin-bottom: 15px;
+}
+#start h2 {
+margin-bottom: 15px;
+}
+#start .lesson {
+background: white;
+padding: 12px;
+border-radius: 10px;
+margin: 10px auto; /* وسط چین */
+font-size: 14px;
+width: 80%; /* عرض کل */
+}
+
+#game h3 {
+margin: 15px 0;
+font-size: 18px;
+color: #333;
+}
+
+#result {
+margin-top: 15px;
+font-size: 20px;
+font-weight: bold;
+min-height: 30px;
+color: #007bff; /* رنگ آبی برای نتیجه */
+}
+
+#final{
+margin-bottom:15px;
+font-size: 22px;
+color: #28a745; /* رنگ سبز برای پایان */
+}
+
+#medal{
+margin: 15px auto;
+display: block;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="rainbow">🌈</div>
+<div id="sun">🌞</div>
+
+<div class="cloud">☁️</div>
+<div class="cloud cloud2">☁️</div>
+
+<div id="birds">🕊 🕊 🕊</div>
+
+<div id="container">
+
+<div id="start">
+
+<h2>🚗 بازی ماشین تقریب</h2>
+
+<div id="level-selection">
+    <h3>سطح بازی را انتخاب کنید:</h3>
+    <button onclick="selectLevel('دهگان')">تقریب دهگان</button>
+    <button onclick="selectLevel('صدگان')">تقریب صدگان</button>
+    <button onclick="selectLevel('هزارگان')">تقریب هزارگان</button> <!-- دکمه جدید -->
+</div>
+
+<button id="start-button" class="big" onclick="startGame()" disabled>شروع بازی</button> <!-- غیرفعال تا سطح انتخاب شود -->
+
+<div class="lesson">
+تقریب یعنی رساندن عدد به نزدیک‌ترین عدد دلخواه (مثلا دهگان، صدگان یا هزارگان).
+اگر رقم سمت راستِ مرتبه مورد نظر، ۵ یا بیشتر باشد، عدد را به سمت بالا گرد می‌کنیم؛ در غیر این صورت به سمت پایین.
+</div>
+
+<button class="big" onclick="more()">بازی بیشتر</button>
+
+</div>
+
+<div id="game" style="display:none">
+
+<h3 id="welcome"></h3>
+
+<div id="mountain">
+<div id="flag">🏁</div>
+<div id="car">🚗</div>
+</div>
+
+<div id="score">امتیاز: 0</div>
+
+<h3 id="question"></h3>
+
+<div class="options">
+<button id="left"></button>
+<button id="right"></button>
+</div>
+
+<div id="result"></div>
+
+</div>
+
+<div id="end" style="display:none">
+<h2 id="final"></h2>
+<div id="medal" style="font-size:60px"></div>
+<button class="big" onclick="restartGame()">بازی دوباره</button>
+<button class="big" onclick="more()">بازی بیشتر</button>
+</div>
+
+</div>
+
+<div id="ground"></div>
+
+<div class="tree" style="left:20px">🌳</div>
+<div class="tree" style="right:20px">🌳</div>
+
+<div id="designer">
+طراح: الهام باقری
+</div>
+
+<script>
+
+// صداها
+let correctSound=new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
+let wrongSound=new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+
+// متغیرهای بازی
+let name=""; // نام بازیکن
+let score=0; // امتیاز فعلی
+let q=0; // تعداد سوالات پرسیده شده
+let level=""; // سطح بازی (دهگان، صدگان، یا هزارگان)
+
+// اعداد و حدود تقریب
+let num, low, high;
+
+// فعال کردن دکمه شروع بعد از انتخاب سطح
+function selectLevel(selectedLevel) {
+    level = selectedLevel;
+    document.getElementById("start-button").disabled = false; // فعال کردن دکمه شروع
+    document.getElementById("level-selection").style.display = 'none'; // پنهان کردن دکمه های انتخاب سطح
+    alert(`سطح ${level} انتخاب شد. دکمه شروع را بزنید.`);
+}
+
+
+// رفتن به صفحه بازی بیشتر
+function more(){
+window.location.href="https://eitaa.com/Nevisha";
+}
+
+// شروع بازی
+function startGame(){
+name=prompt("نام دانش آموز را وارد کنید:");
+if (!name) name="مهمان"; // اگر نامی وارد نشد
+
+document.getElementById("start").style.display="none";
+document.getElementById("game").style.display="block";
+document.getElementById("welcome").innerText="سلام "+name+"!";
+
+score=0; // ریست امتیاز
+q=0; // ریست تعداد سوال
+
+newQ(); // سوال جدید
+}
+
+// تولید سوال جدید بر اساس سطح
+function newQ(){
+    if (level === "دهگان") {
+        num = Math.floor(Math.random() * 9900) + 10; // اعداد 10 تا 9999
+        low = Math.floor(num / 10) * 10;
+        high = low + 10;
+        document.getElementById("question").innerText = `تقریب دهگان عدد ${num}؟`;
+    } else if (level === "صدگان") {
+        num = Math.floor(Math.random() * 99900) + 100; // اعداد 100 تا 99999
+        low = Math.floor(num / 100) * 100;
+        high = low + 100;
+        document.getElementById("question").innerText = `تقریب صدگان عدد ${num}؟`;
+    } else if (level === "هزارگان") { // سطح جدید: هزارگان
+        num = Math.floor(Math.random() * 99000) + 1000; // اعداد 1000 تا 99999
+        low = Math.floor(num / 1000) * 1000;
+        high = low + 1000;
+        document.getElementById("question").innerText = `تقریب هزارگان عدد ${num}؟`;
+    } else {
+        alert("خطا: سطح بازی مشخص نشده است.");
+        return;
+    }
+
+    document.getElementById("left").innerText = low;
+    document.getElementById("right").innerText = high;
+    document.getElementById("car").style.left = "45%"; // برگرداندن ماشین به وسط
+    document.getElementById("result").innerText = ""; // پاک کردن نتیجه قبلی
+    document.getElementById("score").innerText = `امتیاز: ${score}`; // نمایش امتیاز
+}
+
+// نمایش ستاره (فقط جلوه نمایشی)
+function star(){
+let s=document.createElement("div");
+s.className="star";
+s.innerText="⭐";
+s.style.left=(Math.random()*300)+"px"; // موقعیت تصادفی افقی
+s.style.top="220px"; // موقعیت عمودی ثابت
+document.body.appendChild(s); // اضافه کردن ستاره به صفحه
+
+// حذف ستاره بعد از 1 ثانیه
+setTimeout(()=>{s.remove()},1000);
+}
+
+// بررسی پاسخ بازیکن
+function answer(side){
+let correct;
+if (level === "دهگان") {
+    // بررسی رقم یکان برای تقریب دهگان
+    correct = (num % 10 < 5) ? low : high;
+} else if (level === "صدگان") {
+    // بررسی رقم دهگان برای تقریب صدگان
+    correct = (Math.floor(num / 10) % 10 < 5) ? low : high;
+} else if (level === "هزارگان") { // بررسی رقم صدگان برای تقریب هزارگان
+    correct = (Math.floor(num / 100) % 10 < 5) ? low : high;
+} else {
+    alert("خطا در تعیین سطح برای محاسبه پاسخ.");
+    return;
+}
+
+let choice = (side === "left") ? low : high; // انتخاب بازیکن
+
+// حرکت ماشین
+document.getElementById("car").style.left=(side==="left")?"10%":"80%";
+
+// مقایسه پاسخ
+if(choice === correct){
+score++; // افزایش امتیاز
+correctSound.play(); // پخش صدای درست
+star(); // نمایش ستاره
+document.getElementById("result").innerText="✅ آفرین!";
+} else {
+wrongSound.play(); // پخش صدای غلط
+document.getElementById("result").innerText=`❌ پاسخ درست: ${correct}`;
+}
+
+q++; // افزایش شمارنده سوالات
+
+// رفتن به مرحله بعد یا پایان بازی
+setTimeout(()=>{
+if(q < 10){ // اگر هنوز سوال مانده
+newQ(); // سوال جدید
+} else {
+endGame(); // پایان بازی
+}
+},1500); // تاخیر برای نمایش نتیجه و حرکت ماشین
+}
+
+// پایان بازی و نمایش نتایج
+function endGame(){
+document.getElementById("game").style.display="none";
+document.getElementById("end").style.display="block";
+
+document.getElementById("final").innerText=`${name} عزیز، امتیاز شما: ${score} از 10`;
+
+let m="🥉"; // مدال برنز پیش فرض
+if(score >= 8) m="🥇"; // مدال طلا
+else if(score >= 5) m="🥈"; // مدال نقره
+
+document.getElementById("medal").innerText=m; // نمایش مدال
+}
+
+// ریستارت بازی
+function restartGame(){
+document.getElementById("end").style.display="none";
+document.getElementById("game").style.display="block";
+
+score=0; // ریست امتیاز
+q=0; // ریست تعداد سوال
+
+// ریست کردن وضعیت انتخاب سطح
+level = "";
+document.getElementById("start").style.display="block";
+document.getElementById("game").style.display="none";
+document.getElementById("level-selection").style.display = 'block'; // نمایش مجدد انتخاب سطح
+document.getElementById("start-button").disabled = true; // غیرفعال کردن دوباره شروع
+alert("بازی ریست شد. لطفا سطح بازی را مجددا انتخاب کنید.");
+}
+
+// اتصال توابع به دکمه ها
+document.getElementById("left").onclick = () => answer("left");
+document.getElementById("right").onclick = () => answer("right");
+
+</script>
+
+</body>
+</html>
